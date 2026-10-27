@@ -34,6 +34,8 @@ class InspectionCreationTest {
         model = InspectionCreationViewModel(fixture.inspections,
             CatalogTemplateRepository(fixture.templates, ResourceTemplateCatalog(fixture.context)), SavedStateHandle())
         store.put("creation", model)
+        val workflow = InspectionWorkflowViewModel(fixture.inspections, fixture.templates)
+        store.put("workflow", workflow)
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
             val records by fixture.inspections.observeAll().collectAsState(initial = DomainResult.Success(emptyList()))
@@ -42,7 +44,7 @@ class InspectionCreationTest {
                 is DomainResult.Success -> CollectionState.Content(value.value)
                 is DomainResult.Failure -> CollectionState.Error
             }
-            WalkoryTheme { InspectionsWorkspace(model, collection, false, rememberInspectionsNavigation(), {}) }
+            WalkoryTheme { InspectionsWorkspace(model, collection, false, rememberInspectionsNavigation(), {}, workflow) }
         }
         return restoration
     }

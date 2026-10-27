@@ -46,6 +46,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.walkory.app.features.inspections.InspectionsWorkspace
 import com.walkory.app.features.inspections.rememberInspectionCreationModel
 import com.walkory.app.features.inspections.rememberInspectionsNavigation
+import com.walkory.app.features.inspections.rememberInspectionWorkflowModel
 import com.walkory.app.features.templates.TemplatesWorkspace
 import com.walkory.app.features.templates.rememberTemplatesNavigation
 import com.walkory.app.features.templates.rememberTemplatesViewModel
@@ -64,12 +65,13 @@ internal fun WalkoryApp() {
     val templateNavigation = rememberTemplatesNavigation()
     val creation = rememberInspectionCreationModel(application.container.inspections, application.container.templates)
     val inspectionNavigation = rememberInspectionsNavigation()
+    val workflow = rememberInspectionWorkflowModel(application.container.inspections, application.container.templates)
     WalkoryTheme {
         WalkoryShell(
             state, model::retry,
             onTemplatesReselect = { templateNavigation.returnToCatalog(templates) },
             onInspectionsReselect = { inspectionNavigation.reselect(creation) },
-            inspectionsContent = { expanded -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry) },
+            inspectionsContent = { expanded -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry, workflow) },
             templatesContent = { expanded -> TemplatesWorkspace(templates, expanded, templateNavigation) },
         )
     }

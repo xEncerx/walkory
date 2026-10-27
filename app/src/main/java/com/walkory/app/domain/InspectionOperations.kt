@@ -59,12 +59,13 @@ class InspectionOperations(private val clock: Clock = Clock.systemDefaultZone())
         checkId: CheckId,
         description: String?,
         photos: List<Photograph> = emptyList(),
+        issueId: IssueId = IssueId.new(),
     ): DomainResult<Inspection> {
         if (description.isNullOrBlank() && photos.isEmpty()) return DomainResult.Failure(DomainError.EmptyIssue)
         return changeCheck(inspection, checkId) { check ->
             DomainResult.Success(check.copy(
                 state = CheckState.HAS_ISSUE,
-                issues = check.issues + Issue(IssueId.new(), description, photos.toList()),
+                issues = check.issues + Issue(issueId, description, photos.toList()),
             ))
         }.validateAttachments()
     }
@@ -82,6 +83,49 @@ class InspectionOperations(private val clock: Clock = Clock.systemDefaultZone())
                 state = if (needsState) CheckState.UNCHECKED else CheckState.HAS_ISSUE,
             ))
         }.map { IssueDeletion(it, if (needsState) checkId else null) }
+    }
+
+    fun editIssue(inspection: Inspection, checkId: CheckId, issueId: IssueId, description: String?): DomainResult<Inspection> =
+        changeCheck(inspection, checkId) { check ->
+            val issue = check.issues.find { it.id == issueId }
+                ?: return@changeCheck DomainResult.Failure(DomainError.NotFound(RecordKind.ISSUE))
+            if (description.isNullOrBlank() && issue.photos.isEmpty()) return@changeCheck DomainResult.Failure(DomainError.EmptyIssue)
+            DomainResult.Success(check.copy(issues = check.issues.map { if (it.id == issueId) it.copy(description = description) else it }))
+        }
+
+    fun renameRoom(inspection: Inspection, roomId: RoomId, name: String): DomainResult<Inspection> {
+        if (name.isBlank()) return DomainResult.Failure(DomainError.BlankField(RequiredField.ROOM_NAME))
+        return changeRoom(inspection, roomId) { it.copy(name = name) }
+    }
+
+    fun removeRoom(inspection: Inspection, roomId: RoomId): DomainResult<Inspection> {
+        if (inspection.rooms.none { it.id == roomId }) return DomainResult.Failure(DomainError.NotFound(RecordKind.ROOM))
+        return DomainResult.Success(inspection.copy(rooms = inspection.rooms.filterNot { it.id == roomId }, modifiedAt = clock.instant()))
+    }
+
+    fun addCheck(inspection: Inspection, roomId: RoomId, check: InspectionCheck): DomainResult<Inspection> =
+        changeRoom(inspection, roomId) { it.copy(checks = it.checks + check) }.validateAttachments()
+
+    fun removeCheck(inspection: Inspection, checkId: CheckId): DomainResult<Inspection> {
+        val room = inspection.rooms.find { room -> room.checks.any { it.id == checkId } }
+            ?: return DomainResult.Failure(DomainError.NotFound(RecordKind.CHECK))
+        return changeRoom(inspection, room.id) { it.copy(checks = it.checks.filterNot { check -> check.id == checkId }) }
+    }
+
+    fun moveCheck(inspection: Inspection, roomId: RoomId, checkId: CheckId, targetId: CheckId): DomainResult<Inspection> {
+        val room = inspection.rooms.find { it.id == roomId }
+            ?: return DomainResult.Failure(DomainError.NotFound(RecordKind.ROOM))
+        val from = room.checks.indexOfFirst { it.id == checkId }
+        val to = room.checks.indexOfFirst { it.id == targetId }
+        if (from < 0 || to < 0) return DomainResult.Failure(DomainError.NotFound(RecordKind.CHECK))
+        return changeRoom(inspection, roomId) { it.copy(checks = it.checks.toMutableList().apply { add(to, removeAt(from)) }) }
+    }
+
+    private fun changeRoom(inspection: Inspection, roomId: RoomId, change: (InspectionRoom) -> InspectionRoom): DomainResult<Inspection> {
+        if (inspection.rooms.none { it.id == roomId }) return DomainResult.Failure(DomainError.NotFound(RecordKind.ROOM))
+        return DomainResult.Success(inspection.copy(
+            rooms = inspection.rooms.map { if (it.id == roomId) change(it) else it }, modifiedAt = clock.instant(),
+        ))
     }
 
     fun attachPhotograph(

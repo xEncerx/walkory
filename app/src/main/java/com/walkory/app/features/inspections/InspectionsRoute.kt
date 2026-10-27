@@ -61,6 +61,7 @@ internal fun rememberInspectionsNavigation(): InspectionsNavigation {
 internal fun InspectionsWorkspace(
     model: InspectionCreationViewModel, records: CollectionState<Inspection>, expanded: Boolean,
     navigation: InspectionsNavigation, onRetry: () -> Unit,
+    workflow: InspectionWorkflowViewModel,
 ) {
     val state by model.state.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
@@ -97,7 +98,7 @@ internal fun InspectionsWorkspace(
     val reducedMotion = LocalReducedMotion.current
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { WalkoryTopAppBar(title, if (stack.size > 1) back else null) },
+        topBar = { if (current !is InspectionOverviewRoute) WalkoryTopAppBar(title, if (stack.size > 1) back else null) },
         floatingActionButton = {
             if (current == InspectionListRoute || (expanded && current is InspectionOverviewRoute)) {
                 FloatingActionButton({ model.begin(); stack.add(InspectionRoleRoute) }, Modifier.testTag("inspection_new")) {
@@ -113,8 +114,14 @@ internal fun InspectionsWorkspace(
             popTransitionSpec = { if (reducedMotion) EnterTransition.None togetherWith ExitTransition.None else androidx.compose.animation.fadeIn() togetherWith androidx.compose.animation.fadeOut() },
             predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
             entryProvider = entryProvider<NavKey> {
-                entry<InspectionListRoute> { InspectionBrowser(records, null, expanded, select, onRetry) }
-                entry<InspectionOverviewRoute> { route -> InspectionBrowser(records, route.id, expanded, select, onRetry) }
+                entry<InspectionListRoute> { InspectionBrowser(records, null, expanded, select, onRetry) {} }
+                entry<InspectionOverviewRoute> { route ->
+                    key(route.id) {
+                        InspectionBrowser(records, route.id, expanded, select, onRetry) { inspection ->
+                            InspectionWorkflow(workflow, inspection.id, back, state, model::retryTemplates)
+                        }
+                    }
+                }
                 entry<InspectionRoleRoute> { InspectionRoleForm(state, model::role) { stack.add(InspectionDetailsRoute) } }
                 entry<InspectionDetailsRoute> { InspectionDetailsForm(state, model::details, model::date) {
                     if (model.validateDetails()) stack.add(InspectionRoomsRoute)
