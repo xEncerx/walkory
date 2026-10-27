@@ -10,6 +10,9 @@ sealed interface DomainError {
     data object ReadOnlyTemplate : DomainError
     data class NotFound(val record: RecordKind) : DomainError
     data object AlreadyExists : DomainError
+    data object InvalidMutation : DomainError
+    /** Record deletion committed; private file cleanup is durably queued and can be retried. */
+    data object AttachmentCleanupPending : DomainError
     data object StorageUnavailable : DomainError
     data object InsufficientStorage : DomainError
     data object InvalidImage : DomainError

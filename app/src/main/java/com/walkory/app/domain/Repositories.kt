@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Flows expose confirmed durable snapshots or explicit storage errors, never optimistic saved state.
  * Implementations translate storage failures, propagate coroutine cancellation, and preserve old data
- * when a write fails. Collection order inside each aggregate is retained.
+ * when a database write fails. AttachmentCleanupPending is a post-commit cleanup outcome instead.
+ * Collection order inside each aggregate is retained.
  */
 interface InspectionRepository {
     fun observeAll(): Flow<DomainResult<List<Inspection>>>
@@ -19,6 +20,7 @@ interface InspectionRepository {
      * transform writes nothing. IDs, creation time and exclusive ownership cannot change. Use domain
      * operations in transform; successful return means committed storage, not a queued autosave.
      * The transform is synchronous and must not perform external effects.
+     * Removing evidence can return AttachmentCleanupPending after the updated snapshot has committed.
      */
     suspend fun update(
         id: InspectionId,
@@ -28,9 +30,12 @@ interface InspectionRepository {
     /**
      * Delete only this aggregate and its private attachments. Preserve properties, templates, other
      * inspections and exported PDFs. Coordinate recoverable file cleanup, not a fictitious file/DB
-     * transaction. Report storage failures without silently discarding retryable file ownership.
+     * transaction. AttachmentCleanupPending means deletion committed with durable cleanup remaining.
      */
     suspend fun delete(id: InspectionId): DomainResult<Unit>
+
+    /** Retry only the private attachment files durably marked for deletion, including after restart. */
+    suspend fun retryAttachmentCleanup(): DomainResult<Unit>
 }
 
 interface TemplateRepository {
@@ -38,7 +43,7 @@ interface TemplateRepository {
     fun observeAll(language: AppLanguage): Flow<DomainResult<List<ChecklistTemplate>>>
     /** Reject built-in changes with ReadOnlyTemplate. Copies receive a new custom identity. */
     suspend fun saveCustom(template: ChecklistTemplate): DomainResult<ChecklistTemplate>
-    /** No copied room depends on this record; deleting a built-in returns ReadOnlyTemplate. */
+    /** Delete a stored custom template; an ID absent from this store returns NotFound. */
     suspend fun deleteCustom(id: TemplateId): DomainResult<Unit>
 }
 
