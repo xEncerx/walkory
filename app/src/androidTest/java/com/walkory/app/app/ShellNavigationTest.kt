@@ -72,5 +72,10 @@ class ShellNavigationTest {
         compose.onNodeWithTag("navigate_back").performClick()
         compose.onNodeWithTag("info_ABOUT").assertDoesNotExist()
         compose.onNodeWithTag("nav_SETTINGS").assertIsSelected()
+        compose.onNodeWithText(context.getString(com.walkory.app.R.string.common_help)).performClick()
+        compose.onNodeWithTag("nav_SETTINGS").performClick()
+        compose.onNodeWithTag("info_HELP").assertDoesNotExist()
+        compose.onNodeWithTag("navigate_back").assertDoesNotExist()
+        compose.onNodeWithText(context.getString(com.walkory.app.R.string.settings_about)).assertIsDisplayed()
     }
 }

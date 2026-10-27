@@ -12,7 +12,6 @@
     <string name="templates_all">Все</string>
     <string name="templates_own">Мои</string>
     <string name="templates_builtin">Встроенные</string>
-    <string name="templates_all_roles">Обе роли</string>
     <string name="templates_new">Новый шаблон</string>
     <string name="templates_edit">Редактировать шаблон</string>
     <string name="templates_copy">Создать независимую копию</string>

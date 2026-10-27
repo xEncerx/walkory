@@ -10,7 +10,6 @@
     <string name="templates_all">All</string>
     <string name="templates_own">Mine</string>
     <string name="templates_builtin">Built-in</string>
-    <string name="templates_all_roles">Both roles</string>
     <string name="templates_new">New template</string>
     <string name="templates_edit">Edit template</string>
     <string name="templates_copy">Create independent copy</string>

@@ -16,6 +16,7 @@ object WalkoryLayout {
     val listPaneWidth = 360.dp
     val minimumTouchTarget = 48.dp
     val iconSize = 24.dp
+    val floatingActionClearance = 88.dp
 }
 
 internal val WalkoryShapes = Shapes(

@@ -4,12 +4,21 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,18 +47,34 @@ internal fun rememberTemplatesViewModel(repository: TemplateRepository): Templat
 internal class TemplatesNavigationState(
     val backStack: NavBackStack<NavKey>,
     val filter: MutableState<TemplateFilter>,
-    val role: MutableState<InspectionRole?>,
+    val roles: MutableState<List<InspectionRole>>,
     val deleteId: MutableState<String?>,
-)
+    val returningToCatalog: MutableState<Boolean>,
+) {
+    fun returnToCatalog(model: TemplatesViewModel) {
+        if (backStack.last() is TemplateEditorRoute) {
+            if (model.state.value.saveStatus == SaveStatus.SAVING) return
+            returningToCatalog.value = true
+            model.requestClose()
+        } else showCatalog()
+    }
+
+    fun showCatalog() {
+        while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+        deleteId.value = null
+        returningToCatalog.value = false
+    }
+}
 
 /** Navigation and drafts share the shell's process-restorable owner. */
 @Composable
 internal fun rememberTemplatesNavigation(): TemplatesNavigationState {
     val stack = rememberNavBackStack(TemplateCatalogRoute)
     val filter = rememberSaveable { mutableStateOf(TemplateFilter.ALL) }
-    val role = rememberSaveable { mutableStateOf<InspectionRole?>(null) }
+    val roles = rememberSaveable { mutableStateOf(emptyList<InspectionRole>()) }
     val deletion = rememberSaveable { mutableStateOf<String?>(null) }
-    return remember(stack, filter, role, deletion) { TemplatesNavigationState(stack, filter, role, deletion) }
+    val returning = rememberSaveable { mutableStateOf(false) }
+    return remember(stack, filter, roles, deletion, returning) { TemplatesNavigationState(stack, filter, roles, deletion, returning) }
 }
 
 @Composable
@@ -59,7 +84,7 @@ internal fun TemplatesWorkspace(model: TemplatesViewModel, expanded: Boolean, na
     LaunchedEffect(locale) { model.setLanguage(if (locale.language == "ru") AppLanguage.RUSSIAN else AppLanguage.ENGLISH) }
     val backStack = navigation.backStack
     var filter by navigation.filter
-    var role by navigation.role
+    var roles by navigation.roles
     var deleteId by navigation.deleteId
     val current = backStack.last()
     val back: () -> Unit = {
@@ -79,7 +104,8 @@ internal fun TemplatesWorkspace(model: TemplatesViewModel, expanded: Boolean, na
             val editor = backStack.last() as? TemplateEditorRoute
             if (editor != null) {
                 backStack.removeAt(backStack.lastIndex)
-                if (state.saveStatus == SaveStatus.SAVED) select(editor.id)
+                if (navigation.returningToCatalog.value) navigation.showCatalog()
+                else if (state.saveStatus == SaveStatus.SAVED) select(editor.id)
             }
             model.acknowledgeExit()
         }
@@ -98,40 +124,64 @@ internal fun TemplatesWorkspace(model: TemplatesViewModel, expanded: Boolean, na
     val new: () -> Unit = { backStack.add(TemplateEditorRoute(model.beginNew())) }
     val edit: (ChecklistTemplate) -> Unit = { template -> model.beginEdit(template)?.let { backStack.add(TemplateEditorRoute(it)) } }
     val reducedMotion = LocalReducedMotion.current
-    NavDisplay(
-        backStack = backStack,
-        onBack = back,
-        entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
-        transitionSpec = {
-            if (reducedMotion) EnterTransition.None togetherWith ExitTransition.None
-            else androidx.compose.animation.fadeIn() togetherWith androidx.compose.animation.fadeOut()
-        },
-        popTransitionSpec = {
-            if (reducedMotion) EnterTransition.None togetherWith ExitTransition.None
-            else androidx.compose.animation.fadeIn() togetherWith androidx.compose.animation.fadeOut()
-        },
-        predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-        entryProvider = entryProvider<NavKey> {
-            entry<TemplateCatalogRoute> {
-                TemplatesBrowser(state, null, expanded, filter, role, { filter = it }, { role = it }, select, new, edit, createCopy,
-                    { deleteId = it.id.value }, model::retry, back)
-            }
-            entry<TemplateDetailRoute> { route ->
-                TemplatesBrowser(state, route.id, expanded, filter, role, { filter = it }, { role = it }, select, new, edit, createCopy,
-                    { deleteId = it.id.value }, model::retry, back)
-            }
-            entry<TemplateEditorRoute> { route ->
-                if (state.draft?.id == route.id) TemplateEditor(
-                    state, model::rename, model::addItem, model::editItem, model::removeItem, model::moveItem,
-                    model::save, model::requestClose, back,
-                )
-                else TemplateMissing(back)
+    val title = when (current) {
+        is TemplateEditorRoute -> stringResource(if (state.draft?.isNew == true) R.string.templates_new else R.string.templates_edit)
+        is TemplateDetailRoute -> state.templates.find { it.id.value == current.id }?.name ?: stringResource(R.string.templates_title)
+        else -> stringResource(R.string.templates_title)
+    }
+    val toggleRole: (InspectionRole) -> Unit = { role ->
+        roles = if (role in roles) roles - role else roles + role
+    }
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = { WalkoryTopAppBar(title, if (backStack.size > 1) back else null) },
+        floatingActionButton = {
+            if (current == TemplateCatalogRoute || (expanded && current is TemplateDetailRoute)) {
+                FloatingActionButton(new, Modifier.testTag("templates_new")) {
+                    WalkoryIcon(Icons.Rounded.Add, description = stringResource(R.string.templates_new))
+                }
             }
         },
-    )
+    ) { padding ->
+        NavDisplay(
+            backStack = backStack,
+            onBack = back,
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+            entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
+            transitionSpec = {
+                if (reducedMotion) EnterTransition.None togetherWith ExitTransition.None
+                else androidx.compose.animation.fadeIn() togetherWith androidx.compose.animation.fadeOut()
+            },
+            popTransitionSpec = {
+                if (reducedMotion) EnterTransition.None togetherWith ExitTransition.None
+                else androidx.compose.animation.fadeIn() togetherWith androidx.compose.animation.fadeOut()
+            },
+            predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+            entryProvider = entryProvider<NavKey> {
+                entry<TemplateCatalogRoute> {
+                    TemplatesBrowser(state, null, expanded, filter, roles, { filter = it }, toggleRole, select, edit, createCopy,
+                        { deleteId = it.id.value }, model::retry)
+                }
+                entry<TemplateDetailRoute> { route ->
+                    TemplatesBrowser(state, route.id, expanded, filter, roles, { filter = it }, toggleRole, select, edit, createCopy,
+                        { deleteId = it.id.value }, model::retry)
+                }
+                entry<TemplateEditorRoute> { route ->
+                    if (state.draft?.id == route.id) TemplateEditor(
+                        state, model::rename, model::addItem, model::editItem, model::removeItem, model::moveItem,
+                        model::save, model::requestClose,
+                    )
+                    else TemplateMissing()
+                }
+            },
+        )
+    }
     if (state.confirmDiscard && current is TemplateEditorRoute) WalkoryConfirmation(
         stringResource(R.string.templates_discard_title), stringResource(R.string.templates_discard_body),
-        stringResource(R.string.templates_discard), model::closeEditor, model::cancelDiscard,
+        stringResource(R.string.templates_discard), model::closeEditor, {
+            navigation.returningToCatalog.value = false
+            model.cancelDiscard()
+        },
     )
     val deleting = state.templates.find { it.id.value == deleteId }
     if (deleting != null && deleting.origin == TemplateOrigin.Custom) AlertDialog(

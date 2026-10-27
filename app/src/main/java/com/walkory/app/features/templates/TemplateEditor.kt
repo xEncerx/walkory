@@ -37,7 +37,6 @@ internal fun TemplateEditor(
     onMoveItem: (String, String) -> Unit,
     onSave: () -> Unit,
     onDiscard: () -> Unit,
-    onBack: () -> Unit,
 ) {
     val draft = state.draft ?: return
     val saving = state.saveStatus == SaveStatus.SAVING
@@ -45,11 +44,6 @@ internal fun TemplateEditor(
     val listState = rememberLazyListState()
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = WalkoryLayout.contentWidth).fillMaxSize().testTag("template_editor")) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = WalkorySpacing.medium), verticalAlignment = Alignment.CenterVertically) {
-                TemplateBack(onBack)
-                Text(stringResource(if (draft.isNew) R.string.templates_new else R.string.templates_edit),
-                    style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f).semantics { heading() })
-            }
             LazyColumn(Modifier.weight(1f).testTag("template_editor_list"), state = listState,
                 contentPadding = PaddingValues(WalkorySpacing.medium), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
                 item("name") {

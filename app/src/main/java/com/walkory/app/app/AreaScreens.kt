@@ -180,7 +180,6 @@ internal fun InformationScreen(page: Information, onInformation: (Information) -
         contentPadding = PaddingValues(WalkorySpacing.large),
         verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium),
     ) {
-        item { Text(stringResource(page.titleResource()), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() }) }
         when (page) {
             Information.ABOUT -> {
                 item { WalkoryMessage(stringResource(R.string.common_app_name), stringResource(R.string.settings_about_body)) }

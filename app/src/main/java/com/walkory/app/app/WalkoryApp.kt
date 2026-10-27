@@ -4,26 +4,19 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Apartment
 import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.automirrored.rounded.FactCheck
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -42,8 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -58,8 +49,8 @@ import com.walkory.app.features.templates.rememberTemplatesNavigation
 import com.walkory.app.features.templates.rememberTemplatesViewModel
 import com.walkory.app.ui_kit.LocalReducedMotion
 import com.walkory.app.ui_kit.WalkoryIcon
-import com.walkory.app.ui_kit.WalkorySpacing
 import com.walkory.app.ui_kit.WalkoryTheme
+import com.walkory.app.ui_kit.WalkoryTopAppBar
 import com.walkory.app.ui_kit.useTwoPanes
 
 @Composable
@@ -70,7 +61,7 @@ internal fun WalkoryApp() {
     val templates = rememberTemplatesViewModel(application.container.templates)
     val templateNavigation = rememberTemplatesNavigation()
     WalkoryTheme {
-        WalkoryShell(state, model::retry) { expanded ->
+        WalkoryShell(state, model::retry, onTemplatesReselect = { templateNavigation.returnToCatalog(templates) }) { expanded ->
             TemplatesWorkspace(templates, expanded, templateNavigation)
         }
     }
@@ -79,7 +70,13 @@ internal fun WalkoryApp() {
 internal typealias TemplatesContent = @Composable (Boolean) -> Unit
 
 @Composable
-internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Boolean = useTwoPanes(), templatesContent: TemplatesContent) {
+internal fun WalkoryShell(
+    state: ShellState,
+    onRetry: () -> Unit,
+    expanded: Boolean = useTwoPanes(),
+    onTemplatesReselect: () -> Unit = {},
+    templatesContent: TemplatesContent,
+) {
     var selectedArea by rememberSaveable { mutableStateOf(MainArea.INSPECTIONS) }
     val inspections = rememberNavBackStack(AreaRoute(MainArea.INSPECTIONS))
     val objects = rememberNavBackStack(AreaRoute(MainArea.OBJECTS))
@@ -90,6 +87,12 @@ internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Bool
         MainArea.OBJECTS -> objects
         MainArea.TEMPLATES -> templates
         MainArea.SETTINGS -> settings
+    }
+    val selectArea: (MainArea) -> Unit = { area ->
+        if (selectedArea == area) {
+            if (area == MainArea.TEMPLATES) onTemplatesReselect()
+            else while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+        } else selectedArea = area
     }
     val canGoBack = backStack.size > 1
     val onBack: () -> Unit = {
@@ -122,7 +125,7 @@ internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Bool
                     MainArea.entries.forEach { area ->
                         NavigationRailItem(
                             selected = area == selectedArea,
-                            onClick = { selectedArea = area },
+                            onClick = { selectArea(area) },
                             icon = { AreaIcon(area) },
                             label = { Text(stringResource(area.titleResource())) },
                             modifier = Modifier.testTag("nav_${area.name}"),
@@ -134,17 +137,8 @@ internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Bool
                 modifier = Modifier.weight(1f),
                 contentWindowInsets = WindowInsets.safeDrawing,
                 topBar = {
-                    Row(
-                        Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-                            .padding(WalkorySpacing.small),
-                        horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                    ) {
-                        if (canGoBack) IconButton(onBack, Modifier.testTag("navigate_back")) {
-                            WalkoryIcon(Icons.AutoMirrored.Rounded.ArrowBack, description = stringResource(R.string.common_back))
-                        }
-                        Text(stringResource(title), style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.weight(1f).padding(WalkorySpacing.small).semantics { heading() })
+                    if (selectedArea != MainArea.TEMPLATES) {
+                        WalkoryTopAppBar(stringResource(title), if (canGoBack) onBack else null)
                     }
                 },
                 bottomBar = {
@@ -152,7 +146,7 @@ internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Bool
                         MainArea.entries.forEach { area ->
                             NavigationBarItem(
                                 selected = area == selectedArea,
-                                onClick = { selectedArea = area },
+                                onClick = { selectArea(area) },
                                 icon = { AreaIcon(area) },
                                 label = { Text(stringResource(area.titleResource())) },
                                 modifier = Modifier.testTag("nav_${area.name}"),

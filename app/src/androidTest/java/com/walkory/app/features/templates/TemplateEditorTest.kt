@@ -135,7 +135,10 @@ class TemplateEditorTest {
             WalkoryTheme {
                 val templateModel = rememberTemplatesViewModel(repository)
                 val navigation = rememberTemplatesNavigation()
-                com.walkory.app.app.WalkoryShell(com.walkory.app.app.ShellState(), {}, false) { expanded ->
+                com.walkory.app.app.WalkoryShell(
+                    com.walkory.app.app.ShellState(), {}, false,
+                    onTemplatesReselect = { navigation.returnToCatalog(templateModel) },
+                ) { expanded ->
                     TemplatesWorkspace(templateModel, expanded, navigation)
                 }
             }
@@ -150,5 +153,48 @@ class TemplateEditorTest {
         compose.onNodeWithTag("nav_OBJECTS").performClick()
         compose.onNodeWithTag("nav_TEMPLATES").performClick()
         compose.onNodeWithTag("template_name").assertTextContains("Restorable authored draft")
+        compose.onNodeWithTag("nav_TEMPLATES").performClick()
+        compose.onNodeWithText(text(R.string.common_cancel)).performClick()
+        compose.onNodeWithTag("template_name").assertTextContains("Restorable authored draft")
+        compose.onNodeWithTag("nav_TEMPLATES").performClick()
+        compose.onAllNodesWithText(text(R.string.templates_discard)).onLast().performClick()
+        compose.onNodeWithTag("templates_catalog").assertIsDisplayed()
+        compose.onNodeWithTag("template_editor").assertDoesNotExist()
+        val source = ResourceTemplateCatalog(fixture.context).templates(AppLanguage.ENGLISH).first()
+        compose.onNodeWithTag("template_${source.id.value}").performClick()
+        compose.onNodeWithTag("template_detail").assertIsDisplayed()
+        compose.onNodeWithTag("nav_TEMPLATES").performClick()
+        compose.onNodeWithTag("templates_catalog").assertIsDisplayed()
+        compose.onNodeWithTag("template_detail").assertDoesNotExist()
+    }
+
+    @Test fun roleFiltersAllowIndependentSelectionAndRestoreBothSelections() {
+        val catalog = ResourceTemplateCatalog(fixture.context).templates(AppLanguage.ENGLISH)
+        val tenant = catalog.first { (it.origin as TemplateOrigin.BuiltIn).role == InspectionRole.TENANT }
+        val landlord = catalog.first { (it.origin as TemplateOrigin.BuiltIn).role == InspectionRole.LANDLORD }
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent {
+            var roles by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(emptyList<InspectionRole>()) }
+            WalkoryTheme {
+                TemplatesBrowser(TemplatesState(loading = false, templates = listOf(tenant, landlord)), null, false,
+                    TemplateFilter.ALL, roles, {}, { role -> roles = if (role in roles) roles - role else roles + role },
+                    {}, {}, {}, {}, {})
+            }
+        }
+        compose.onNodeWithTag("templates_role_TENANT").performClick()
+        compose.onNodeWithTag("template_${tenant.id.value}").assertIsDisplayed()
+        compose.onNodeWithTag("template_${landlord.id.value}").assertDoesNotExist()
+        compose.onNodeWithTag("templates_role_LANDLORD").performClick()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithTag("templates_role_TENANT").assertIsSelected()
+        compose.onNodeWithTag("templates_role_LANDLORD").assertIsSelected()
+        compose.onNodeWithTag("template_${tenant.id.value}").assertIsDisplayed()
+        compose.onNodeWithTag("template_${landlord.id.value}").assertIsDisplayed()
+        compose.onNodeWithTag("templates_role_TENANT").performClick()
+        compose.onNodeWithTag("template_${tenant.id.value}").assertDoesNotExist()
+        compose.onNodeWithTag("template_${landlord.id.value}").assertIsDisplayed()
+        compose.onNodeWithTag("templates_role_LANDLORD").performClick()
+        compose.onNodeWithTag("template_${tenant.id.value}").assertIsDisplayed()
+        compose.onNodeWithTag("template_${landlord.id.value}").assertIsDisplayed()
     }
 }
