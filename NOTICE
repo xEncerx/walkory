@@ -1,0 +1,16 @@
+Walkory
+
+This application's source is distributed under the GNU Affero General Public
+License, version 3. See LICENSE for the complete license text.
+
+The application includes iText Community for Android (core and layout),
+available under the GNU Affero General Public License, version 3:
+https://itextpdf.com/products/itext-community
+https://github.com/itext/itext-java
+The original iText notices and PDF producer metadata must be preserved.
+
+The Android PDF compatibility tests include the unmodified Noto Sans Regular
+font from the Noto project. Copyright 2018 The Noto Project Authors
+(github.com/googlei18n/noto-fonts). The font is licensed under the SIL Open Font
+License 1.1; the full notice accompanies it in
+app/src/androidTest/assets/fonts/OFL.txt.

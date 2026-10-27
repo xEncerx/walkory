@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_app_name" translatable="false">Walkory</string>
+    <string name="common_offline_description">Property inspections, stored on your device. No account or internet connection required.</string>
+</resources>

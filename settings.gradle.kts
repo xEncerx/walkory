@@ -19,6 +19,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://repo.itextsupport.com/android") {
+            content {
+                includeGroup("com.itextpdf.android")
+            }
+        }
     }
 }
 
