@@ -13,15 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.walkory.app.R
-import com.walkory.app.domain.InspectionRole
-import com.walkory.app.domain.InspectionState
 import com.walkory.app.ui_kit.WalkoryError
 import com.walkory.app.ui_kit.WalkoryListDetail
 import com.walkory.app.ui_kit.WalkoryLoading
@@ -29,8 +25,6 @@ import com.walkory.app.ui_kit.WalkoryMessage
 import com.walkory.app.ui_kit.WalkorySpacing
 import com.walkory.app.ui_kit.WalkoryRecordRow
 import com.walkory.app.ui_kit.WalkoryActionRow
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 internal fun MainArea.titleResource(): Int = when (this) {
     MainArea.INSPECTIONS -> R.string.inspections_title
@@ -60,25 +54,12 @@ internal fun AreaScreen(
         })
         return
     }
-    val locale = LocalConfiguration.current.locales[0]
     val records: CollectionState<RecordSummary> = when (area) {
-        MainArea.INSPECTIONS -> state.inspections.present { inspection ->
-            val role = stringResource(if (inspection.details.role == InspectionRole.TENANT)
-                R.string.inspections_tenant else R.string.inspections_landlord)
-            val status = stringResource(if (inspection.state == InspectionState.COMPLETED)
-                R.string.inspections_completed else R.string.inspections_in_progress)
-            RecordSummary(inspection.id.value, inspection.details.name, listOf(
-                inspection.details.property.address,
-                inspection.details.date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)),
-                role, status,
-                pluralStringResource(R.plurals.inspections_rooms, inspection.rooms.size, inspection.rooms.size),
-            ))
-        }
         MainArea.OBJECTS -> state.objects.present { RecordSummary(it.id.value, it.name, listOf(it.address)) }
-        MainArea.TEMPLATES, MainArea.SETTINGS -> error("Area has its own feature surface")
+        MainArea.INSPECTIONS, MainArea.TEMPLATES, MainArea.SETTINGS -> error("Area has its own feature surface")
     }
     WalkoryListDetail(expanded, selectedId != null || information != null, list = {
-        RecordList(area, records, selectedId, onSelect, onInformation, onRetry)
+        RecordList(records, selectedId, onSelect, onInformation, onRetry)
     }, detail = {
         if (information != null) InformationScreen(information, onInformation)
         else when (records) {
@@ -110,7 +91,6 @@ private inline fun <T, R> CollectionState<T>.present(transform: @Composable (T) 
 
 @Composable
 private fun RecordList(
-    area: MainArea,
     state: CollectionState<RecordSummary>,
     selectedId: String?,
     onSelect: (String) -> Unit,
@@ -126,17 +106,7 @@ private fun RecordList(
             CollectionState.Loading -> item { WalkoryLoading() }
             CollectionState.Error -> item { WalkoryError(onRetry) }
             is CollectionState.Content -> if (state.items.isEmpty()) item {
-                val title = when (area) {
-                    MainArea.INSPECTIONS -> R.string.inspections_empty_title
-                    MainArea.OBJECTS -> R.string.objects_empty_title
-                    else -> R.string.templates_empty_title
-                }
-                val body = when (area) {
-                    MainArea.INSPECTIONS -> R.string.inspections_empty_body
-                    MainArea.OBJECTS -> R.string.objects_empty_body
-                    else -> R.string.templates_empty_body
-                }
-                WalkoryMessage(stringResource(title), stringResource(body))
+                WalkoryMessage(stringResource(R.string.objects_empty_title), stringResource(R.string.objects_empty_body))
             } else items(state.items, key = { it.id }) { record ->
                 WalkoryRecordRow(
                     title = record.title,

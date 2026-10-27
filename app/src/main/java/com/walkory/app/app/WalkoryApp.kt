@@ -43,7 +43,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.walkory.app.R
+import com.walkory.app.features.inspections.InspectionsWorkspace
+import com.walkory.app.features.inspections.rememberInspectionCreationModel
+import com.walkory.app.features.inspections.rememberInspectionsNavigation
 import com.walkory.app.features.templates.TemplatesWorkspace
 import com.walkory.app.features.templates.rememberTemplatesNavigation
 import com.walkory.app.features.templates.rememberTemplatesViewModel
@@ -60,14 +62,20 @@ internal fun WalkoryApp() {
     val state by model.state.collectAsStateWithLifecycle()
     val templates = rememberTemplatesViewModel(application.container.templates)
     val templateNavigation = rememberTemplatesNavigation()
+    val creation = rememberInspectionCreationModel(application.container.inspections, application.container.templates)
+    val inspectionNavigation = rememberInspectionsNavigation()
     WalkoryTheme {
-        WalkoryShell(state, model::retry, onTemplatesReselect = { templateNavigation.returnToCatalog(templates) }) { expanded ->
-            TemplatesWorkspace(templates, expanded, templateNavigation)
-        }
+        WalkoryShell(
+            state, model::retry,
+            onTemplatesReselect = { templateNavigation.returnToCatalog(templates) },
+            onInspectionsReselect = { inspectionNavigation.reselect(creation) },
+            inspectionsContent = { expanded -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry) },
+            templatesContent = { expanded -> TemplatesWorkspace(templates, expanded, templateNavigation) },
+        )
     }
 }
 
-internal typealias TemplatesContent = @Composable (Boolean) -> Unit
+internal typealias AreaContent = @Composable (Boolean) -> Unit
 
 @Composable
 internal fun WalkoryShell(
@@ -75,7 +83,9 @@ internal fun WalkoryShell(
     onRetry: () -> Unit,
     expanded: Boolean = useTwoPanes(),
     onTemplatesReselect: () -> Unit = {},
-    templatesContent: TemplatesContent,
+    onInspectionsReselect: () -> Unit = {},
+    inspectionsContent: AreaContent,
+    templatesContent: AreaContent,
 ) {
     var selectedArea by rememberSaveable { mutableStateOf(MainArea.INSPECTIONS) }
     val inspections = rememberNavBackStack(AreaRoute(MainArea.INSPECTIONS))
@@ -91,6 +101,7 @@ internal fun WalkoryShell(
     val selectArea: (MainArea) -> Unit = { area ->
         if (selectedArea == area) {
             if (area == MainArea.TEMPLATES) onTemplatesReselect()
+            else if (area == MainArea.INSPECTIONS) onInspectionsReselect()
             else while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
         } else selectedArea = area
     }
@@ -137,7 +148,7 @@ internal fun WalkoryShell(
                 modifier = Modifier.weight(1f),
                 contentWindowInsets = WindowInsets.safeDrawing,
                 topBar = {
-                    if (selectedArea != MainArea.TEMPLATES) {
+                    if (selectedArea != MainArea.TEMPLATES && selectedArea != MainArea.INSPECTIONS) {
                         WalkoryTopAppBar(stringResource(title), if (canGoBack) onBack else null)
                     }
                 },
@@ -181,6 +192,7 @@ internal fun WalkoryShell(
                                 entryProvider = entryProvider<NavKey> {
                                     entry<AreaRoute> { route ->
                                         if (route.area == MainArea.TEMPLATES) templatesContent(expanded)
+                                        else if (route.area == MainArea.INSPECTIONS) inspectionsContent(expanded)
                                         else AreaScreen(route.area, state, null, null, expanded, openRecord, openInformation, onRetry)
                                     }
                                     entry<RecordRoute> { route ->

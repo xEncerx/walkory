@@ -31,7 +31,7 @@ class ShellNavigationTest {
     @Test fun selectionSurvivesTabSwitchRestorationAndResizeWithoutDuplicatingBackStack() {
         var expanded by mutableStateOf(false)
         val restoration = StateRestorationTester(compose)
-        restoration.setContent { WalkoryTheme { WalkoryShell(state, {}, expanded) { androidx.compose.material3.Text("Template area fixture") } } }
+        restoration.setContent { WalkoryTheme { WalkoryShell(state, {}, expanded, inspectionsContent = { androidx.compose.material3.Text("Inspection area fixture") }) { androidx.compose.material3.Text("Template area fixture") } } }
         compose.onNodeWithTag("nav_OBJECTS").performClick()
         compose.onNodeWithTag("record_sample-home").performClick()
         compose.onNodeWithTag("record_detail").assertIsDisplayed()
@@ -56,7 +56,7 @@ class ShellNavigationTest {
     }
 
     @Test fun nestedInformationReturnsToCallingContextAndRetainsInactiveTabStack() {
-        compose.setContent { WalkoryTheme { WalkoryShell(state, {}, false) { androidx.compose.material3.Text("Template area fixture") } } }
+        compose.setContent { WalkoryTheme { WalkoryShell(state, {}, false, inspectionsContent = { androidx.compose.material3.Text("Inspection area fixture") }) { androidx.compose.material3.Text("Template area fixture") } } }
         compose.onNodeWithTag("nav_SETTINGS").performClick()
         // Use localized labels from the same Android resource boundary as the actual screen.
         val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext

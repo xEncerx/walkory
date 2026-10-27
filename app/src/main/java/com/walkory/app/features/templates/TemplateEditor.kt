@@ -1,31 +1,24 @@
 package com.walkory.app.features.templates
 
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.walkory.app.R
 import com.walkory.app.ui_kit.*
-import kotlinx.coroutines.launch
 
 @Composable
 internal fun TemplateEditor(
@@ -61,7 +54,7 @@ internal fun TemplateEditor(
                     OutlinedCard(Modifier.fillMaxWidth().testTag("template_item_$index")) {
                         Column(Modifier.padding(WalkorySpacing.medium), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                ReorderHandle(item.key, listState, saving, onMoveItem)
+                                CheckReorderHandle(item.key, listState, saving, stringResource(R.string.templates_drag), onMoveItem)
                                 Text(stringResource(R.string.templates_number, index + 1), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                                 IconButton({ onMoveItem(item.key, draft.checks[index - 1].key) }, enabled = !saving && index > 0,
                                     modifier = Modifier.testTag("template_up_$index")) {
@@ -107,39 +100,3 @@ private fun TemplateTextField(value: String, onChange: (String) -> Unit, label: 
         modifier = modifier.fillMaxWidth())
 }
 
-/** Drag works on visible item centers; explicit move controls provide the accessible alternative. */
-@Composable
-private fun ReorderHandle(key: String, list: LazyListState, disabled: Boolean, onMove: (String, String) -> Unit) {
-    val scope = rememberCoroutineScope()
-    val move by rememberUpdatedState(onMove)
-    val description = stringResource(R.string.templates_drag)
-    Box(Modifier.sizeIn(minWidth = WalkoryLayout.minimumTouchTarget, minHeight = WalkoryLayout.minimumTouchTarget)
-        .semantics { contentDescription = description }
-        .pointerInput(key, disabled) {
-            if (!disabled) {
-                var center = 0f
-                detectDragGesturesAfterLongPress(
-                    onDragStart = {
-                        val item = list.layoutInfo.visibleItemsInfo.find { it.key == key }
-                        center = item?.let { it.offset + it.size / 2f } ?: 0f
-                    },
-                    onDrag = { change, delta ->
-                        change.consume()
-                        center += delta.y
-                        val info = list.layoutInfo
-                        val target = info.visibleItemsInfo.find { center >= it.offset && center <= it.offset + it.size }
-                        if (target != null && target.key != key) move(key, target.key.toString())
-                        val edge = WalkoryLayout.minimumTouchTarget.toPx()
-                        val scroll = when {
-                            center < info.viewportStartOffset + edge -> -edge / 3f
-                            center > info.viewportEndOffset - edge -> edge / 3f
-                            else -> 0f
-                        }
-                        if (scroll != 0f) scope.launch { list.scrollBy(scroll) }
-                    },
-                )
-            }
-        }, contentAlignment = Alignment.Center) {
-        WalkoryIcon(Icons.Rounded.DragHandle, description = null)
-    }
-}

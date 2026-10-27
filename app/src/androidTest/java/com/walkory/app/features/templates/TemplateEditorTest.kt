@@ -138,6 +138,7 @@ class TemplateEditorTest {
                 com.walkory.app.app.WalkoryShell(
                     com.walkory.app.app.ShellState(), {}, false,
                     onTemplatesReselect = { navigation.returnToCatalog(templateModel) },
+                    inspectionsContent = { androidx.compose.material3.Text("Inspection area fixture") },
                 ) { expanded ->
                     TemplatesWorkspace(templateModel, expanded, navigation)
                 }

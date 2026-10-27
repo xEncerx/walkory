@@ -16,6 +16,8 @@ private fun ShellPreview() {
         WalkoryShell(ShellState(
             inspections = CollectionState.Content(emptyList()),
             objects = CollectionState.Content(listOf(PropertyCard(PropertyId("preview-home"), "Sample home", "Sample address"))),
-        ), {}) { androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(com.walkory.app.R.string.templates_title)) }
+        ), {}, inspectionsContent = { expanded ->
+            com.walkory.app.features.inspections.InspectionBrowser(CollectionState.Content(emptyList()), null, expanded, {}, {})
+        }) { androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(com.walkory.app.R.string.templates_title)) }
     }
 }
