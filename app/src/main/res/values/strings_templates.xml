@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="templates_title">Templates</string>
+    <string name="templates_empty_title">No saved templates yet</string>
+    <string name="templates_empty_body">A template contains check titles and guidance, without results or photographs.</string>
+    <plurals name="templates_checks">
+        <item quantity="one">%d check</item>
+        <item quantity="other">%d checks</item>
+    </plurals>
+</resources>

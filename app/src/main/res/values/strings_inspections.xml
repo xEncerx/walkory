@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="inspections_title">Inspections</string>
+    <string name="inspections_empty_title">Your inspections belong here</string>
+    <string name="inspections_empty_body">Keep the condition of a rental property in one place. No inspection records yet.</string>
+    <string name="inspections_tenant">Tenant at move-in</string>
+    <string name="inspections_landlord">Landlord after move-out</string>
+    <string name="inspections_in_progress">In progress</string>
+    <string name="inspections_completed">Completed</string>
+    <plurals name="inspections_rooms">
+        <item quantity="one">%d room</item>
+        <item quantity="other">%d rooms</item>
+    </plurals>
+</resources>

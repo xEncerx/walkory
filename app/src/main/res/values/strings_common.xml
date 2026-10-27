@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="common_app_name" translatable="false">Walkory</string>
-    <string name="common_offline_description">Property inspections, stored on your device. No account or internet connection required.</string>
+    <string name="common_back">Back</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_required_field">Enter a value other than spaces</string>
+    <string name="common_loading">Loading…</string>
+    <string name="common_error_title">Could not load local data</string>
+    <string name="common_error_body">Your records have not been changed. Try again.</string>
+    <string name="common_saving">Saving…</string>
+    <string name="common_saved">Saved on this device</string>
+    <string name="common_save_error">Not saved. Your input is retained. Try again.</string>
+    <string name="common_select_title">Select an item</string>
+    <string name="common_select_body">Its details will appear here.</string>
+    <string name="common_missing_title">Item no longer available</string>
+    <string name="common_missing_body">It may have been removed. Go back to the list.</string>
+    <string name="common_help">How it works</string>
+    <string name="common_help_intro">Keep a record of the property condition</string>
+    <string name="common_help_role">Choose a role for each inspection: tenant at move-in or landlord after move-out.</string>
+    <string name="common_help_rooms">Prepare rooms using one checklist template or your own list. Copied text belongs to the inspection.</string>
+    <string name="common_help_results">Record conditions, individual issues and photographs. A full PDF includes unchecked items too.</string>
+    <string name="common_local_data">Data on this device</string>
+    <string name="common_local_data_body">Records stay on this device, without accounts, cloud sync or backups. Only a PDF you choose to save or share leaves the app.</string>
 </resources>

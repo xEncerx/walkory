@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="templates_title">Шаблоны</string>
+    <string name="templates_empty_title">Сохранённых шаблонов пока нет</string>
+    <string name="templates_empty_body">Шаблон содержит названия проверок и рекомендации, без результатов и фотографий.</string>
+    <plurals name="templates_checks">
+        <item quantity="one">%d проверка</item>
+        <item quantity="few">%d проверки</item>
+        <item quantity="many">%d проверок</item>
+        <item quantity="other">%d проверки</item>
+    </plurals>
+</resources>

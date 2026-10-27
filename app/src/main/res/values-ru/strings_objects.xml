@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="objects_title">Объекты</string>
+    <string name="objects_empty_title">Квартир пока нет</string>
+    <string name="objects_empty_body">Карточки объединяют осмотры одной квартиры. Можно работать и с самостоятельными осмотрами.</string>
+</resources>

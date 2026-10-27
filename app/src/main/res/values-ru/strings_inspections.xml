@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="inspections_title">Осмотры</string>
+    <string name="inspections_empty_title">Здесь будут ваши осмотры</string>
+    <string name="inspections_empty_body">Состояние арендованной квартиры в одном месте. Записей об осмотрах пока нет.</string>
+    <string name="inspections_tenant">Арендатор при заселении</string>
+    <string name="inspections_landlord">Арендодатель после выезда</string>
+    <string name="inspections_in_progress">В процессе</string>
+    <string name="inspections_completed">Завершён</string>
+    <plurals name="inspections_rooms">
+        <item quantity="one">%d помещение</item>
+        <item quantity="few">%d помещения</item>
+        <item quantity="many">%d помещений</item>
+        <item quantity="other">%d помещения</item>
+    </plurals>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="objects_title">Properties</string>
+    <string name="objects_empty_title">No property cards yet</string>
+    <string name="objects_empty_body">Property cards group inspections of the same home. Inspections can also exist independently.</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_about">About Walkory</string>
+    <string name="settings_about_body">Rental property inspections, stored locally.</string>
+</resources>

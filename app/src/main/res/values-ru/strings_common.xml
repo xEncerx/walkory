@@ -1,4 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="common_offline_description">Осмотры недвижимости с хранением на вашем устройстве. Без аккаунта и подключения к интернету.</string>
+    <string name="common_back">Назад</string>
+    <string name="common_cancel">Отмена</string>
+    <string name="common_retry">Повторить</string>
+    <string name="common_required_field">Введите значение, отличное от пробелов</string>
+    <string name="common_loading">Загрузка…</string>
+    <string name="common_error_title">Не удалось загрузить данные</string>
+    <string name="common_error_body">Ваши записи не изменены. Попробуйте ещё раз.</string>
+    <string name="common_saving">Сохранение…</string>
+    <string name="common_saved">Сохранено на устройстве</string>
+    <string name="common_save_error">Не сохранено. Введённые данные сохранены в форме. Попробуйте ещё раз.</string>
+    <string name="common_select_title">Выберите запись</string>
+    <string name="common_select_body">Здесь появятся её сведения.</string>
+    <string name="common_missing_title">Запись недоступна</string>
+    <string name="common_missing_body">Возможно, она удалена. Вернитесь к списку.</string>
+    <string name="common_help">Как пользоваться</string>
+    <string name="common_help_intro">Состояние квартиры — по пунктам</string>
+    <string name="common_help_role">Выберите роль для каждого осмотра: арендатор при заселении или арендодатель после выезда жильца.</string>
+    <string name="common_help_rooms">Подготовьте помещения с одним шаблоном или своим списком. Скопированный текст принадлежит осмотру.</string>
+    <string name="common_help_results">Отмечайте состояние, отдельные замечания и фотографии. Полный PDF включает и непроверенные пункты.</string>
+    <string name="common_local_data">Данные на устройстве</string>
+    <string name="common_local_data_body">Записи остаются на этом устройстве: без аккаунтов, облака и резервных копий. За пределы приложения выходит только PDF, который вы решите сохранить или передать.</string>
 </resources>
