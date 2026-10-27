@@ -1,6 +1,8 @@
 package com.walkory.app.app
 
 import android.content.Context
+import com.walkory.app.data.catalog.CatalogTemplateRepository
+import com.walkory.app.data.catalog.ResourceTemplateCatalog
 import com.walkory.app.data.local.AttachmentStorageCoordinator
 import com.walkory.app.data.local.RoomInspectionRepository
 import com.walkory.app.data.local.RoomPropertyRepository
@@ -27,7 +29,7 @@ class AppContainer(context: Context) {
 
     val inspections: InspectionRepository = RoomInspectionRepository(database, attachments)
     val properties: PropertyRepository = RoomPropertyRepository(database)
-    val templates: TemplateRepository = RoomTemplateRepository(database)
+    val templates: TemplateRepository = CatalogTemplateRepository(RoomTemplateRepository(database), ResourceTemplateCatalog(applicationContext))
     val settings: SettingsRepository = DataStoreSettingsRepository(createPreferencesStore(applicationContext))
     val imageLoader = createLocalImageLoader(applicationContext)
 }

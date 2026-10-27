@@ -23,6 +23,7 @@ data class ChecklistTemplate(
 object TemplateOperations {
     fun copy(template: ChecklistTemplate, name: String): DomainResult<ChecklistTemplate> {
         if (name.isBlank()) return DomainResult.Failure(DomainError.BlankField(RequiredField.TEMPLATE_NAME))
+        if (template.checks.isEmpty()) return DomainResult.Failure(DomainError.EmptyTemplate)
         return DomainResult.Success(ChecklistTemplate(TemplateId.new(), name, TemplateOrigin.Custom, template.checks.toList()))
     }
 
@@ -33,12 +34,14 @@ object TemplateOperations {
     ): DomainResult<ChecklistTemplate> {
         if (template.origin is TemplateOrigin.BuiltIn) return DomainResult.Failure(DomainError.ReadOnlyTemplate)
         if (name.isBlank()) return DomainResult.Failure(DomainError.BlankField(RequiredField.TEMPLATE_NAME))
+        if (checks.isEmpty()) return DomainResult.Failure(DomainError.EmptyTemplate)
         return DomainResult.Success(template.copy(name = name, checks = checks.toList()))
     }
 
     /** Save only prepared content, even if the room already contains observations and evidence. */
     fun saveRoom(room: InspectionRoom, name: String): DomainResult<ChecklistTemplate> {
         if (name.isBlank()) return DomainResult.Failure(DomainError.BlankField(RequiredField.TEMPLATE_NAME))
+        if (room.checks.isEmpty()) return DomainResult.Failure(DomainError.EmptyTemplate)
         return DomainResult.Success(ChecklistTemplate(
             TemplateId.new(), name, TemplateOrigin.Custom,
             room.checks.map { TemplateCheck(it.title, it.guidance) },
@@ -54,3 +57,10 @@ object TemplateOperations {
         ))
     }
 }
+
+/** Persists only an independent prepared list; never writes back to the inspected room. */
+suspend fun TemplateRepository.saveRoomAsTemplate(room: InspectionRoom, name: String): DomainResult<ChecklistTemplate> =
+    when (val prepared = TemplateOperations.saveRoom(room, name)) {
+        is DomainResult.Failure -> prepared
+        is DomainResult.Success -> saveCustom(prepared.value)
+    }

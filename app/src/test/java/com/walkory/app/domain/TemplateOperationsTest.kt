@@ -63,6 +63,17 @@ class TemplateOperationsTest {
         assertEquals(null, inspection.propertyId)
     }
 
+    @Test fun emptyCustomContentIsRejectedWithoutMutatingSourceOrRoom() {
+        val custom = TemplateOperations.copy(DomainFixtures.template(), "Custom").value()
+        val originalChecks = custom.checks
+        assertEquals(DomainResult.Failure(DomainError.EmptyTemplate), TemplateOperations.edit(custom, "Renamed", emptyList()))
+        assertEquals(DomainResult.Failure(DomainError.EmptyTemplate), TemplateOperations.copy(custom.copy(checks = emptyList()), "Copy"))
+        val emptyRoom = TemplateOperations.prepareRoom(RoomType.CUSTOM, "Empty room", null).value()
+        assertEquals(DomainResult.Failure(DomainError.EmptyTemplate), TemplateOperations.saveRoom(emptyRoom, "Saved list"))
+        assertEquals(originalChecks, custom.checks)
+        assertEquals(emptyList<InspectionCheck>(), emptyRoom.checks)
+    }
+
     @Test fun blankTemplateAndRoomNamesProducePresentationErrors() {
         val template = DomainFixtures.template()
         val custom = TemplateOperations.copy(template, "Custom").value()

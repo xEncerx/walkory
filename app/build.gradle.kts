@@ -37,6 +37,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    bundle {
+        language {
+            // Both catalog languages must remain available without network downloads.
+            enableSplit = false
+        }
+    }
     buildFeatures {
         compose = true
     }

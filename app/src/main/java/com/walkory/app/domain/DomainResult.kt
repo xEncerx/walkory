@@ -8,6 +8,7 @@ sealed interface DomainError {
     data class UncheckedConfirmationRequired(val uncheckedCount: Int) : DomainError
     data object AttachmentAlreadyOwned : DomainError
     data object ReadOnlyTemplate : DomainError
+    data object EmptyTemplate : DomainError
     data class NotFound(val record: RecordKind) : DomainError
     data object AlreadyExists : DomainError
     data object InvalidMutation : DomainError

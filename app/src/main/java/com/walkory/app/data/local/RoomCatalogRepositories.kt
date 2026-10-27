@@ -27,6 +27,7 @@ internal class RoomTemplateRepository(private val database: WalkoryDatabase) : T
 
     override suspend fun saveCustom(template: ChecklistTemplate): DomainResult<ChecklistTemplate> = storageResult {
         if (template.origin != TemplateOrigin.Custom) return@storageResult DomainResult.Failure(DomainError.ReadOnlyTemplate)
+        if (template.checks.isEmpty()) return@storageResult DomainResult.Failure(DomainError.EmptyTemplate)
         database.withTransaction {
             dao.saveTemplate(TemplateEntity(template.id.value, template.name))
             dao.deleteTemplateChecks(template.id.value)

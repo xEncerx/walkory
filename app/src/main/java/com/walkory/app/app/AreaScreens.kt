@@ -75,10 +75,7 @@ internal fun AreaScreen(
             ))
         }
         MainArea.OBJECTS -> state.objects.present { RecordSummary(it.id.value, it.name, listOf(it.address)) }
-        MainArea.TEMPLATES -> state.templates.present { RecordSummary(it.id.value, it.name, listOf(
-            pluralStringResource(R.plurals.templates_checks, it.checks.size, it.checks.size),
-        )) }
-        MainArea.SETTINGS -> error("Settings has no record collection")
+        MainArea.TEMPLATES, MainArea.SETTINGS -> error("Area has its own feature surface")
     }
     WalkoryListDetail(expanded, selectedId != null || information != null, list = {
         RecordList(area, records, selectedId, onSelect, onInformation, onRetry)

@@ -17,7 +17,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
-import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import com.walkory.app.R
 import org.junit.Rule
@@ -28,7 +27,10 @@ class FoundationInteractionTest {
 
     @Test fun whitespaceValidationAndDraftSurviveRestorationAndModalBack() {
         val restoration = StateRestorationTester(compose)
+        var keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController? = null
         restoration.setContent {
+            val controller = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+            androidx.compose.runtime.SideEffect { keyboardController = controller }
             var draft by rememberSaveable { mutableStateOf("  ") }
             var validate by rememberSaveable { mutableStateOf(false) }
             var confirm by rememberSaveable { mutableStateOf(false) }
@@ -47,12 +49,12 @@ class FoundationInteractionTest {
         compose.onNodeWithText(error).assertIsDisplayed()
         compose.onNodeWithTag("draft").performTextReplacement("User-authored draft")
         compose.onNodeWithText(error).assertDoesNotExist()
-        Espresso.closeSoftKeyboard()
+        compose.runOnIdle { checkNotNull(keyboardController).hide() }
         compose.onNodeWithText("Discard").performClick()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText("Discard draft?").assertIsDisplayed()
-        Espresso.closeSoftKeyboard()
-        Espresso.pressBack()
+        compose.runOnIdle { checkNotNull(keyboardController).hide() }
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
         compose.onNodeWithText("Discard draft?").assertDoesNotExist()
         compose.onNodeWithTag("draft").assertTextContains("User-authored draft")
         compose.onNodeWithText("Discard").performClick()

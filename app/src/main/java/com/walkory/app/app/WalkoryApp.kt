@@ -32,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +39,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -55,7 +53,9 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.walkory.app.R
-import com.walkory.app.domain.AppLanguage
+import com.walkory.app.features.templates.TemplatesWorkspace
+import com.walkory.app.features.templates.rememberTemplatesNavigation
+import com.walkory.app.features.templates.rememberTemplatesViewModel
 import com.walkory.app.ui_kit.LocalReducedMotion
 import com.walkory.app.ui_kit.WalkoryIcon
 import com.walkory.app.ui_kit.WalkorySpacing
@@ -67,15 +67,19 @@ internal fun WalkoryApp() {
     val application = LocalContext.current.applicationContext as WalkoryApplication
     val model: ShellViewModel = viewModel(factory = ShellViewModel.Factory(application.container))
     val state by model.state.collectAsStateWithLifecycle()
-    val locale = LocalConfiguration.current.locales[0]
-    LaunchedEffect(locale) {
-        model.setLanguage(if (locale.language == "ru") AppLanguage.RUSSIAN else AppLanguage.ENGLISH)
+    val templates = rememberTemplatesViewModel(application.container.templates)
+    val templateNavigation = rememberTemplatesNavigation()
+    WalkoryTheme {
+        WalkoryShell(state, model::retry) { expanded ->
+            TemplatesWorkspace(templates, expanded, templateNavigation)
+        }
     }
-    WalkoryTheme { WalkoryShell(state, model::retry) }
 }
 
+internal typealias TemplatesContent = @Composable (Boolean) -> Unit
+
 @Composable
-internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Boolean = useTwoPanes()) {
+internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Boolean = useTwoPanes(), templatesContent: TemplatesContent) {
     var selectedArea by rememberSaveable { mutableStateOf(MainArea.INSPECTIONS) }
     val inspections = rememberNavBackStack(AreaRoute(MainArea.INSPECTIONS))
     val objects = rememberNavBackStack(AreaRoute(MainArea.OBJECTS))
@@ -182,7 +186,8 @@ internal fun WalkoryShell(state: ShellState, onRetry: () -> Unit, expanded: Bool
                                 },
                                 entryProvider = entryProvider<NavKey> {
                                     entry<AreaRoute> { route ->
-                                        AreaScreen(route.area, state, null, null, expanded, openRecord, openInformation, onRetry)
+                                        if (route.area == MainArea.TEMPLATES) templatesContent(expanded)
+                                        else AreaScreen(route.area, state, null, null, expanded, openRecord, openInformation, onRetry)
                                     }
                                     entry<RecordRoute> { route ->
                                         AreaScreen(route.area, state, route.id, null, expanded, openRecord, openInformation, onRetry)
