@@ -16,7 +16,8 @@ import com.walkory.app.ui_kit.WalkoryTheme
 @Composable
 private fun ShellPreview() {
     WalkoryTheme {
-        WalkoryShell(objectsContent = { expanded, _ ->
+        WalkoryShell(settingsContent = { _, _ -> androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(com.walkory.app.R.string.settings_title)) },
+            objectsContent = { expanded, _ ->
             PropertiesBrowser(CollectionState.Content(listOf(PropertyCard(PropertyId("preview-home"), "Sample home", "Sample address"))),
                 CollectionState.Content(emptyList()), null, expanded, {}, {}, PropertiesState(), {}, {}, {}, {})
         }, inspectionsContent = { expanded, _ ->

@@ -64,6 +64,25 @@ import com.walkory.app.features.media.PhotographHost
 
 import com.walkory.app.features.objects.*
 import com.walkory.app.features.inspections.rememberInspectionHistoryModel
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.os.LocaleListCompat
+import androidx.core.view.WindowCompat
+import com.walkory.app.domain.AppLanguage
+import com.walkory.app.domain.AppTheme
+import com.walkory.app.features.settings.rememberSettingsModel
+import com.walkory.app.ui_kit.WalkoryError
+import com.walkory.app.ui_kit.WalkoryLoading
+
+private fun AppLanguage.localeTags(): String = when (this) {
+    AppLanguage.SYSTEM -> ""
+    AppLanguage.RUSSIAN -> "ru"
+    AppLanguage.ENGLISH -> "en"
+}
+
 @Composable
 internal fun WalkoryApp() {
     val application = LocalContext.current.applicationContext as WalkoryApplication
@@ -82,9 +101,57 @@ internal fun WalkoryApp() {
         initializer { PhotographViewModel(application.container.photographs, application.container.inspections, createSavedStateHandle()) }
     } }
     val photographs: PhotographViewModel = viewModel(factory = photoFactory)
-    WalkoryTheme {
+    val settings = rememberSettingsModel(application.container.settings)
+    val settingsState by settings.state.collectAsStateWithLifecycle()
+    val preferences = settingsState.preferences
+    val platformLocales = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    LaunchedEffect(platformLocales, preferences != null) {
+        if (preferences != null && settingsState.localeChange == null) {
+            settings.synchronizeLocale(when {
+                platformLocales.startsWith("ru") -> AppLanguage.RUSSIAN
+                platformLocales.startsWith("en") -> AppLanguage.ENGLISH
+                else -> AppLanguage.SYSTEM
+            })
+        }
+    }
+    LaunchedEffect(settingsState.localeChange) {
+        settingsState.localeChange?.let { language ->
+            settings.localeApplied()
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.localeTags()))
+        }
+    }
+    if (preferences == null) {
+        WalkoryTheme {
+            if (settingsState.loadError) WalkoryError(settings::retry)
+            else WalkoryLoading()
+        }
+        return
+    }
+    val darkTheme = when (preferences.theme) {
+        AppTheme.SYSTEM -> isSystemInDarkTheme()
+        AppTheme.LIGHT -> false
+        AppTheme.DARK -> true
+    }
+    val view = LocalView.current
+    val activity = androidx.activity.compose.LocalActivity.current
+    SideEffect {
+        creation.setDefaultInspector(preferences.defaultInspector)
+        activity?.window?.let { window ->
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+    }
+    WalkoryTheme(
+        darkTheme = darkTheme,
+        dynamicColor = preferences.dynamicColors, accent = preferences.accent,
+        textScale = preferences.textScale.percent / 100f, higherContrast = preferences.higherContrast,
+        reducedMotion = preferences.reducedMotion,
+    ) {
         PhotographHost(photographs)
         WalkoryShell(
+            settingsContent = { page, onInformation -> SettingsScreen(page, settings, onInformation) },
             onTemplatesReselect = { templateNavigation.returnToCatalog(templates) },
             onInspectionsReselect = { inspectionNavigation.reselect(creation) },
             onObjectsReselect = { propertyNavigation.reselect(properties) },
@@ -109,6 +176,7 @@ internal typealias AreaContent = @Composable (Boolean) -> Unit
 @Composable
 internal fun WalkoryShell(
     expanded: Boolean = useTwoPanes(),
+    settingsContent: @Composable (Information?, (Information) -> Unit) -> Unit,
     onTemplatesReselect: () -> Unit = {},
     onInspectionsReselect: () -> Unit = {},
     onObjectsReselect: () -> Unit = {},
@@ -160,7 +228,7 @@ internal fun WalkoryShell(
                             selected = area == selectedArea,
                             onClick = { selectArea(area) },
                             icon = { AreaIcon(area) },
-                            label = { Text(stringResource(area.titleResource())) },
+                            label = { Text(stringResource(area.titleResource()), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
                             modifier = Modifier.testTag("nav_${area.name}"),
                         )
                     }
@@ -181,7 +249,7 @@ internal fun WalkoryShell(
                                 selected = area == selectedArea,
                                 onClick = { selectArea(area) },
                                 icon = { AreaIcon(area) },
-                                label = { Text(stringResource(area.titleResource())) },
+                                label = { Text(stringResource(area.titleResource()), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
                                 modifier = Modifier.testTag("nav_${area.name}"),
                             )
                         }
@@ -216,10 +284,10 @@ internal fun WalkoryShell(
                                         if (route.area == MainArea.TEMPLATES) templatesContent(expanded)
                                         else if (route.area == MainArea.INSPECTIONS) inspectionsContent(expanded) { selectedArea = MainArea.OBJECTS }
                                         else if (route.area == MainArea.OBJECTS) objectsContent(expanded) { selectedArea = MainArea.INSPECTIONS }
-                                        else SettingsScreen(null, expanded, openInformation)
+                                        else settingsContent(null, openInformation)
                                     }
                                     entry<InformationRoute> { route ->
-                                        SettingsScreen(route.page, expanded, openInformation)
+                                        settingsContent(route.page, openInformation)
                                     }
                                 },
                             )

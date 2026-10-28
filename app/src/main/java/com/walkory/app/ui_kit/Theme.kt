@@ -1,6 +1,10 @@
 package com.walkory.app.ui_kit
 
 import android.os.Build
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.snap
+import androidx.compose.runtime.remember
+import com.walkory.app.domain.Accent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
@@ -15,8 +19,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 private val LightColors = lightColorScheme(
     primary = Color(0xFF00696E), onPrimary = Color.White,
     primaryContainer = Color(0xFF9CF1F6), onPrimaryContainer = Color(0xFF002022),
@@ -61,31 +63,44 @@ private val WalkoryTypography = Typography()
 val LocalReducedMotion = staticCompositionLocalOf { false }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private object ReducedMotionScheme : MotionScheme {
+    override fun <T> defaultSpatialSpec(): FiniteAnimationSpec<T> = snap()
+    override fun <T> fastSpatialSpec(): FiniteAnimationSpec<T> = snap()
+    override fun <T> slowSpatialSpec(): FiniteAnimationSpec<T> = snap()
+    override fun <T> defaultEffectsSpec(): FiniteAnimationSpec<T> = snap()
+    override fun <T> fastEffectsSpec(): FiniteAnimationSpec<T> = snap()
+    override fun <T> slowEffectsSpec(): FiniteAnimationSpec<T> = snap()
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun WalkoryTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     textScale: Float = 1f,
     reducedMotion: Boolean = false,
+    accent: Accent = Accent.TEAL,
+    higherContrast: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val colors = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkColors
-        else -> LightColors
+    val colors = remember(context, darkTheme, dynamicColor, accent, higherContrast) {
+        val base = when {
+            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            else -> (if (darkTheme) DarkColors else LightColors).withAccent(accent, darkTheme)
+        }
+        if (higherContrast) base.withHigherContrast(darkTheme) else base
     }
-    val density = LocalDensity.current
+    val typography = remember(textScale) { WalkoryTypography.scaled(textScale) }
     CompositionLocalProvider(
-        LocalDensity provides Density(density.density, density.fontScale * textScale),
         LocalReducedMotion provides reducedMotion,
     ) {
         MaterialExpressiveTheme(
             colorScheme = colors,
-            typography = WalkoryTypography,
+            typography = typography,
             shapes = WalkoryShapes,
-            motionScheme = if (reducedMotion) MotionScheme.standard() else MotionScheme.expressive(),
+            motionScheme = if (reducedMotion) ReducedMotionScheme else MotionScheme.expressive(),
             content = content,
         )
     }

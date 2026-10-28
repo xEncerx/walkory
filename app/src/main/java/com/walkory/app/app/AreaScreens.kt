@@ -2,7 +2,6 @@ package com.walkory.app.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -11,8 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.walkory.app.R
-import com.walkory.app.ui_kit.WalkoryActionRow
-import com.walkory.app.ui_kit.WalkoryListDetail
 import com.walkory.app.ui_kit.WalkoryMessage
 import com.walkory.app.ui_kit.WalkorySpacing
 
@@ -25,30 +22,12 @@ internal fun MainArea.titleResource(): Int = when (this) {
 
 
 @Composable
-internal fun SettingsScreen(information: Information?, expanded: Boolean, onInformation: (Information) -> Unit) {
-    WalkoryListDetail(expanded, information != null, list = {
-        InformationLinks(onInformation)
-    }, detail = {
-        if (information != null) InformationScreen(information, onInformation) else SelectionPrompt()
-    })
+internal fun SettingsScreen(information: Information?, model: com.walkory.app.features.settings.SettingsViewModel, onInformation: (Information) -> Unit) {
+    if (information != null) InformationScreen(information, onInformation)
+    else com.walkory.app.features.settings.SettingsWorkspace(model, onInformation)
 }
 
 
-@Composable
-private fun SelectionPrompt() {
-    Column(Modifier.padding(WalkorySpacing.large)) {
-        WalkoryMessage(stringResource(R.string.common_select_title), stringResource(R.string.common_select_body))
-    }
-}
-
-@Composable
-private fun InformationLinks(onInformation: (Information) -> Unit) {
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(WalkorySpacing.medium)) {
-        items(Information.entries) { page ->
-            WalkoryActionRow(stringResource(page.titleResource()), { onInformation(page) })
-        }
-    }
-}
 
 internal fun Information.titleResource(): Int = when (this) {
     Information.HELP -> R.string.common_help

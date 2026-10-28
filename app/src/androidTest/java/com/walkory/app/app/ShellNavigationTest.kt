@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso
 import com.walkory.app.domain.PropertyCard
 import com.walkory.app.domain.PropertyId
@@ -29,7 +30,9 @@ class ShellNavigationTest {
     @Composable private fun Shell(expanded: Boolean) {
         val model = rememberPropertiesModel(fixture.properties, "shell_properties")
         val navigation = rememberPropertiesNavigation()
-        WalkoryShell(expanded = expanded, objectsContent = { wide, _ ->
+        val settings = com.walkory.app.features.settings.rememberSettingsModel(
+            androidx.test.core.app.ApplicationProvider.getApplicationContext<WalkoryApplication>().container.settings)
+        WalkoryShell(expanded = expanded, settingsContent = { page, onInformation -> SettingsScreen(page, settings, onInformation) }, objectsContent = { wide, _ ->
             PropertiesWorkspace(model, state.objects, state.inspections, wide, navigation, {}, {}, {})
         }, inspectionsContent = { _, _ -> androidx.compose.material3.Text("Inspection area fixture") }) {
             androidx.compose.material3.Text("Template area fixture")
@@ -76,7 +79,7 @@ class ShellNavigationTest {
         compose.onNodeWithTag("nav_SETTINGS").performClick()
         // Use localized labels from the same Android resource boundary as the actual screen.
         val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
-        compose.onNodeWithText(context.getString(com.walkory.app.R.string.settings_about)).performClick()
+        compose.onNodeWithText(context.getString(com.walkory.app.R.string.settings_about)).performScrollTo().performClick()
         compose.onNodeWithTag("info_ABOUT").assertIsDisplayed()
         compose.onNodeWithText(context.getString(com.walkory.app.R.string.common_help)).performClick()
         compose.onNodeWithTag("info_HELP").assertIsDisplayed()
@@ -88,10 +91,10 @@ class ShellNavigationTest {
         compose.onNodeWithTag("navigate_back").performClick()
         compose.onNodeWithTag("info_ABOUT").assertDoesNotExist()
         compose.onNodeWithTag("nav_SETTINGS").assertIsSelected()
-        compose.onNodeWithText(context.getString(com.walkory.app.R.string.common_help)).performClick()
+        compose.onNodeWithText(context.getString(com.walkory.app.R.string.common_help)).performScrollTo().performClick()
         compose.onNodeWithTag("nav_SETTINGS").performClick()
         compose.onNodeWithTag("info_HELP").assertDoesNotExist()
         compose.onNodeWithTag("navigate_back").assertDoesNotExist()
-        compose.onNodeWithText(context.getString(com.walkory.app.R.string.settings_about)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(com.walkory.app.R.string.settings_about)).performScrollTo().assertIsDisplayed()
     }
 }

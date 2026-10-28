@@ -68,6 +68,7 @@ class PropertiesHistoryTest {
             WalkoryTheme {
                 WalkoryShell(expanded = expanded.value, onObjectsReselect = { propertyNavigation.reselect(propertyModel) },
                     onInspectionsReselect = { navigation.reselect(creation) },
+                    settingsContent = { _, _ -> TextFixture() },
                     objectsContent = { wide, showInspections ->
                         PropertiesWorkspace(propertyModel, properties, inspections, wide, propertyNavigation, {},
                             { navigation.select(it, propertyNavigation.selectedId()); showInspections() }, { navigation.begin(creation, it); showInspections() })

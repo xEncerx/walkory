@@ -40,6 +40,7 @@ internal fun PhotographViewer(
     val initial = photos.indexOfFirst { it.id.value == selected }.coerceAtLeast(0)
     val pager = rememberPagerState(initialPage = initial) { photos.size }
     val scope = rememberCoroutineScope()
+    val reducedMotion = LocalReducedMotion.current
     var zoomPhoto by rememberSaveable { mutableStateOf(selected) }
     var zoom by rememberSaveable { mutableFloatStateOf(1f) }
     var editing by rememberSaveable { mutableStateOf(false) }
@@ -79,9 +80,13 @@ internal fun PhotographViewer(
                     verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
                     photo.caption?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-                        OutlinedButton({ scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }, enabled = pager.currentPage > 0,
+                        OutlinedButton({ scope.launch {
+                            if (reducedMotion) pager.scrollToPage(pager.currentPage - 1) else pager.animateScrollToPage(pager.currentPage - 1)
+                        } }, enabled = pager.currentPage > 0,
                             modifier = Modifier.testTag("photo_previous")) { Text(stringResource(R.string.inspections_media_previous)) }
-                        OutlinedButton({ scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }, enabled = pager.currentPage < photos.lastIndex,
+                        OutlinedButton({ scope.launch {
+                            if (reducedMotion) pager.scrollToPage(pager.currentPage + 1) else pager.animateScrollToPage(pager.currentPage + 1)
+                        } }, enabled = pager.currentPage < photos.lastIndex,
                             modifier = Modifier.testTag("photo_next")) { Text(stringResource(R.string.inspections_media_next)) }
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {

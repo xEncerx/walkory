@@ -28,6 +28,32 @@ class InspectionCreationViewModelTest {
     private fun model(repository: CreationRepository, handle: SavedStateHandle = SavedStateHandle()) =
         InspectionCreationViewModel(repository, CreationTemplates(), handle, clock).also { store.put("model-${handle.hashCode()}", it) }
 
+    @Test fun defaultInspectorIsCopiedOnlyIntoFreshDraftAndRemainsFreelyEditable() = runTest(dispatcher) {
+        val repository = CreationRepository()
+        val handle = SavedStateHandle()
+        val model = model(repository, handle)
+        model.setDefaultInspector("First inspector")
+        model.begin()
+        assertEquals("First inspector", model.state.value.draft!!.inspector)
+        model.setDefaultInspector("New default")
+        assertEquals("First inspector", model.state.value.draft!!.inspector)
+        model.details("Inspection", "Sample Street 9", "")
+        val restored = model(repository, SavedStateHandle(mapOf("inspection_draft" to handle.get<String>("inspection_draft"))))
+        restored.setDefaultInspector("Another default")
+        assertEquals("", restored.state.value.draft!!.inspector)
+        restored.role(InspectionRole.TENANT)
+        restored.addRoom(RoomType.CUSTOM, "Room")
+        restored.create(); runCurrent()
+        val existing = repository.rows.value.single()
+        assertNull(existing.details.inspector)
+        restored.begin()
+        assertEquals("Another default", restored.state.value.draft!!.inspector)
+        restored.setDefaultInspector(null)
+        restored.discard(); restored.begin()
+        assertEquals("", restored.state.value.draft!!.inspector)
+        assertEquals(existing, repository.rows.value.single())
+    }
+
     @Test fun cardPreselectionRetainsRoleChoiceAndEditableSnapshotAcrossDraftRestoration() = runTest(dispatcher) {
         val repository = CreationRepository()
         val handle = SavedStateHandle()

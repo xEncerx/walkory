@@ -138,6 +138,7 @@ class TemplateEditorTest {
                 com.walkory.app.app.WalkoryShell(
                     expanded = false,
                     onTemplatesReselect = { navigation.returnToCatalog(templateModel) },
+                    settingsContent = { _, _ -> androidx.compose.material3.Text("Settings area fixture") },
                     inspectionsContent = { _, _ -> androidx.compose.material3.Text("Inspection area fixture") },
                     objectsContent = { _, _ -> androidx.compose.material3.Text("Property area fixture") },
                 ) { expanded ->

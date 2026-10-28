@@ -7,6 +7,7 @@ import com.walkory.app.data.local.PersistenceFixture
 import com.walkory.app.data.local.PersistenceRecords
 import com.walkory.app.data.local.accepted
 import com.walkory.app.data.local.read
+import com.walkory.app.data.local.readAll
 import com.walkory.app.domain.*
 import java.io.File
 import java.util.UUID
@@ -28,8 +29,16 @@ import org.junit.runner.RunWith
 class SettingsRepositoryTest {
     @Test fun allPreferencesSurviveStoreRecreationAndResetCannotDeleteRecords() = runBlocking {
         PersistenceFixture().use { fixture ->
-            val inspection = PersistenceRecords.inspection()
+            val card = PersistenceRecords.card()
+            val template = PersistenceRecords.template()
+            fixture.properties.save(card).accepted()
+            fixture.templates.saveCustom(template).accepted()
+            val inspection = PersistenceRecords.inspection(card)
+            fixture.writePhotos(inspection)
             fixture.inspections.create(inspection).accepted()
+            val originals = inspection.rooms.flatMap { room -> room.checks.flatMap { check ->
+                check.conditionPhotos + check.issues.flatMap { it.photos }
+            } }.associate { it.fileId to fixture.files.resolve(it.fileId).readBytes().toList() }
             val file = File(fixture.directory, "settings.preferences_pb")
             var scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
             fun repository() = DataStoreSettingsRepository(PreferenceDataStoreFactory.create(scope = scope) { file })
@@ -43,6 +52,10 @@ class SettingsRepositoryTest {
                 scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
                 repository = repository()
                 assertEquals(selected, withTimeout(10_000) { repository.observe().first().accepted() })
+                PdfPhotoQuality.entries.forEach { quality ->
+                    repository.update { it.copy(pdfPhotoQuality = quality) }.accepted()
+                    originals.forEach { (id, bytes) -> assertEquals(bytes, fixture.files.resolve(id).readBytes().toList()) }
+                }
                 repository.reset().accepted()
                 scope.coroutineContext[Job]!!.cancelAndJoin()
                 scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -50,6 +63,9 @@ class SettingsRepositoryTest {
                 assertEquals(Preferences(), withTimeout(10_000) { repository.observe().first().accepted() })
                 fixture.reopen()
                 assertEquals(inspection, fixture.inspections.read(inspection.id))
+                assertEquals(listOf(card), fixture.properties.observeAll().first().accepted())
+                assertEquals(listOf(template), fixture.templates.readAll())
+                originals.forEach { (id, bytes) -> assertEquals(bytes, fixture.files.resolve(id).readBytes().toList()) }
             } finally { scope.coroutineContext[Job]!!.cancelAndJoin() }
         }
     }

@@ -46,6 +46,8 @@ internal class InspectionCreationViewModel(
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : ViewModel() {
     private val language = MutableStateFlow(AppLanguage.SYSTEM)
+    private var defaultInspector: String? = null
+    fun setDefaultInspector(value: String?) { defaultInspector = value }
     private val revision = MutableStateFlow(0)
     private val mutableState = MutableStateFlow(InspectionCreationState(
         draft = savedState.get<String>("inspection_draft")?.let { Json.decodeFromString<InspectionDraft>(it) },
@@ -68,7 +70,7 @@ internal class InspectionCreationViewModel(
     fun retryTemplates() { mutableState.update { it.copy(loadingTemplates = true, templateError = false) }; revision.update { it + 1 } }
     fun begin(property: PropertyCard? = null) {
         store(InspectionDraft(InspectionId.new().value, date = LocalDate.now(clock).toString(),
-            address = property?.address.orEmpty(), propertyId = property?.id?.value))
+            address = property?.address.orEmpty(), propertyId = property?.id?.value, inspector = defaultInspector.orEmpty()))
         mutableState.update { it.copy(validation = false, saveStatus = SaveStatus.IDLE, confirmDiscard = false) }
     }
     private fun store(draft: InspectionDraft?) {
