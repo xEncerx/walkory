@@ -55,6 +55,12 @@ import com.walkory.app.ui_kit.WalkoryIcon
 import com.walkory.app.ui_kit.WalkoryTheme
 import com.walkory.app.ui_kit.WalkoryTopAppBar
 import com.walkory.app.ui_kit.useTwoPanes
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.walkory.app.features.media.PhotographViewModel
+import androidx.lifecycle.createSavedStateHandle
+import com.walkory.app.features.media.PhotographHost
 
 @Composable
 internal fun WalkoryApp() {
@@ -66,12 +72,17 @@ internal fun WalkoryApp() {
     val creation = rememberInspectionCreationModel(application.container.inspections, application.container.templates)
     val inspectionNavigation = rememberInspectionsNavigation()
     val workflow = rememberInspectionWorkflowModel(application.container.inspections, application.container.templates)
+    val photoFactory = remember(application.container) { viewModelFactory {
+        initializer { PhotographViewModel(application.container.photographs, application.container.inspections, createSavedStateHandle()) }
+    } }
+    val photographs: PhotographViewModel = viewModel(factory = photoFactory)
     WalkoryTheme {
+        PhotographHost(photographs)
         WalkoryShell(
             state, model::retry,
             onTemplatesReselect = { templateNavigation.returnToCatalog(templates) },
             onInspectionsReselect = { inspectionNavigation.reselect(creation) },
-            inspectionsContent = { expanded -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry, workflow) },
+            inspectionsContent = { expanded -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry, workflow, photographs) },
             templatesContent = { expanded -> TemplatesWorkspace(templates, expanded, templateNavigation) },
         )
     }

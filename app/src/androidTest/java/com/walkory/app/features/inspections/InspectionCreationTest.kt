@@ -36,6 +36,9 @@ class InspectionCreationTest {
         store.put("creation", model)
         val workflow = InspectionWorkflowViewModel(fixture.inspections, fixture.templates)
         store.put("workflow", workflow)
+        val photographs = com.walkory.app.features.media.PhotographViewModel(
+            com.walkory.app.platform.images.PhotographMedia(fixture.context, fixture.inspections, fixture.files), fixture.inspections, SavedStateHandle())
+        store.put("photographs", photographs)
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
             val records by fixture.inspections.observeAll().collectAsState(initial = DomainResult.Success(emptyList()))
@@ -44,7 +47,7 @@ class InspectionCreationTest {
                 is DomainResult.Success -> CollectionState.Content(value.value)
                 is DomainResult.Failure -> CollectionState.Error
             }
-            WalkoryTheme { InspectionsWorkspace(model, collection, false, rememberInspectionsNavigation(), {}, workflow) }
+            WalkoryTheme { InspectionsWorkspace(model, collection, false, rememberInspectionsNavigation(), {}, workflow, photographs) }
         }
         return restoration
     }

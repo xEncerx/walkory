@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import com.walkory.app.R
 import com.walkory.app.domain.*
 import com.walkory.app.ui_kit.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 internal fun ResultRoomScreen(record: InspectionResultState, room: InspectionRoom, editing: Boolean, model: InspectionWorkflowViewModel,
@@ -69,7 +70,10 @@ internal fun ResultRoomScreen(record: InspectionResultState, room: InspectionRoo
 }
 
 @Composable
-internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: InspectionCheck, initialIssue: String?, model: InspectionWorkflowViewModel, onBack: () -> Unit) {
+internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: InspectionCheck, initialIssue: String?, model: InspectionWorkflowViewModel,
+    photographs: com.walkory.app.features.media.PhotographViewModel, onBack: () -> Unit) {
+    val workflow by model.state.collectAsStateWithLifecycle()
+    val saveStatus = workflow.records[id]?.saveStatus ?: SaveStatus.IDLE
     var editing by rememberSaveable { mutableStateOf(false) }
     var removing by rememberSaveable { mutableStateOf(false) }
     var addingIssue by rememberSaveable { mutableStateOf(false) }
@@ -92,15 +96,23 @@ internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: In
             OutlinedTextField(check.comment.orEmpty(), { model.comment(id, check.id, it) }, label = { Text(stringResource(R.string.inspections_comment)) },
                 modifier = Modifier.fillMaxWidth().testTag("result_comment"))
         }
+        item("condition_photos") {
+            com.walkory.app.features.media.PhotographCollection(id, PhotographOwner.Condition(check.id), check.conditionPhotos,
+                photographs, { owner, photo, caption -> model.caption(id, owner, photo, caption) },
+                { owner, photo -> model.removePhoto(id, owner, photo) }, saveStatus, { model.retry(id) })
+        }
         itemsIndexed(check.issues, key = { _, issue -> issue.id.value }) { index, issue ->
             OutlinedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(WalkorySpacing.medium)) {
                     Text(stringResource(R.string.inspections_issue_number, index + 1), style = MaterialTheme.typography.titleMedium)
-                    Text(issue.description ?: stringResource(R.string.inspections_issue_without_text))
+                    Text(issue.description?.takeIf { it.isNotBlank() } ?: stringResource(R.string.inspections_issue_without_text))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
                         TextButton({ editingIssue = issue.id.value }, Modifier.testTag("result_issue_edit_${issue.id.value}")) { Text(stringResource(R.string.inspections_edit_issue)) }
                         TextButton({ removingIssue = issue.id.value }, Modifier.testTag("result_issue_remove_${issue.id.value}")) { Text(stringResource(R.string.inspections_delete_issue)) }
                     }
+                    com.walkory.app.features.media.PhotographCollection(id, PhotographOwner.IssueEvidence(check.id, issue.id), issue.photos,
+                        photographs, { owner, photo, caption -> model.caption(id, owner, photo, caption) },
+                        { owner, photo -> model.removePhoto(id, owner, photo) }, saveStatus, { model.retry(id) })
                 }
             }
         }
@@ -115,8 +127,7 @@ internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: In
     }
     if (editing) ResultTextDialog(R.string.inspections_edit_check, check.title, check.guidance.orEmpty(), true,
         { title, guidance -> model.editCheck(id, check.id, title, guidance) }, { editing = false })
-    if (addingIssue) ResultTextDialog(R.string.inspections_add_issue, "", null, true,
-        { description, _ -> model.addIssue(id, check.id, description) }, { addingIssue = false }, issue = true)
+    if (addingIssue) NewPhotoIssueDialog(id, check, model, photographs) { addingIssue = false }
     check.issues.find { it.id.value == editingIssue }?.let { issue ->
         ResultTextDialog(R.string.inspections_edit_issue, issue.description.orEmpty(), null, issue.photos.isEmpty(),
             { description, _ -> model.editIssue(id, check.id, issue.id, description) }, { editingIssue = null }, issue = true)

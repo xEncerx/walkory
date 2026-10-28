@@ -16,18 +16,19 @@ import com.walkory.app.domain.SettingsRepository
 import com.walkory.app.domain.TemplateRepository
 import com.walkory.app.platform.files.PrivateAttachmentFiles
 import com.walkory.app.platform.images.createLocalImageLoader
+import com.walkory.app.platform.images.PhotographMedia
 import java.io.File
 
 class AppContainer(context: Context) {
     private val applicationContext = context.applicationContext
 
     private val database = WalkoryDatabase.open(applicationContext)
-    private val attachments = AttachmentStorageCoordinator(
-        database.records(),
-        PrivateAttachmentFiles(File(applicationContext.filesDir, "attachments")),
-    )
+    private val attachmentFiles = PrivateAttachmentFiles(File(applicationContext.filesDir, "attachments"))
+    private val attachments = AttachmentStorageCoordinator(database.records(), attachmentFiles)
+    private val inspectionRepository = RoomInspectionRepository(database, attachments)
 
-    val inspections: InspectionRepository = RoomInspectionRepository(database, attachments)
+    val inspections: InspectionRepository = inspectionRepository
+    internal val photographs = PhotographMedia(applicationContext, inspectionRepository, attachmentFiles)
     val properties: PropertyRepository = RoomPropertyRepository(database)
     val templates: TemplateRepository = CatalogTemplateRepository(RoomTemplateRepository(database), ResourceTemplateCatalog(applicationContext))
     val settings: SettingsRepository = DataStoreSettingsRepository(createPreferencesStore(applicationContext))

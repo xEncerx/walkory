@@ -62,6 +62,7 @@ internal fun InspectionsWorkspace(
     model: InspectionCreationViewModel, records: CollectionState<Inspection>, expanded: Boolean,
     navigation: InspectionsNavigation, onRetry: () -> Unit,
     workflow: InspectionWorkflowViewModel,
+    photographs: com.walkory.app.features.media.PhotographViewModel,
 ) {
     val state by model.state.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
@@ -118,7 +119,7 @@ internal fun InspectionsWorkspace(
                 entry<InspectionOverviewRoute> { route ->
                     key(route.id) {
                         InspectionBrowser(records, route.id, expanded, select, onRetry) { inspection ->
-                            InspectionWorkflow(workflow, inspection.id, back, state, model::retryTemplates)
+                            InspectionWorkflow(workflow, inspection.id, back, state, model::retryTemplates, photographs)
                         }
                     }
                 }

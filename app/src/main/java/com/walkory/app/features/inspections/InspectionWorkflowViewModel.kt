@@ -160,6 +160,10 @@ internal class InspectionWorkflowViewModel(
     }
     fun editIssue(id: InspectionId, check: CheckId, issue: IssueId, description: String) = edit(id) { operations.editIssue(it, check, issue, description) }
     fun deleteIssue(id: InspectionId, check: CheckId, issue: IssueId) = edit(id) { operations.deleteIssue(it, check, issue).map { deletion -> deletion.inspection } }
+    fun caption(id: InspectionId, owner: PhotographOwner, photo: PhotographId, value: String) =
+        edit(id) { operations.captionPhotograph(it, owner, photo, value) }
+    fun removePhoto(id: InspectionId, owner: PhotographOwner, photo: PhotographId) =
+        edit(id) { operations.removePhotograph(it, owner, photo) }
     fun complete(id: InspectionId, confirmed: Boolean) = edit(id) { operations.complete(it, confirmed) }
 
     fun saveTemplate(id: InspectionId, roomId: RoomId, name: String) {

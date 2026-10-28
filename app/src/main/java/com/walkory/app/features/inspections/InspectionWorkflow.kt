@@ -33,7 +33,7 @@ internal fun rememberInspectionWorkflowModel(inspections: InspectionRepository, 
 
 @Composable
 internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: InspectionId, onBack: () -> Unit,
-    templates: InspectionCreationState, onRetryTemplates: () -> Unit) {
+    templates: InspectionCreationState, onRetryTemplates: () -> Unit, photographs: com.walkory.app.features.media.PhotographViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
     val record = state.records[id]
     when {
@@ -57,6 +57,7 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
             Column(Modifier.fillMaxWidth().padding(horizontal = WalkorySpacing.medium)) {
                 WalkorySaveStatus(record.saveStatus, { model.retry(id) })
                 if (state.readError) WalkoryError(model::retryRead)
+                com.walkory.app.features.media.PhotographFeedback(photographs)
                 record.error?.let { error ->
                     Row {
                         Text(stringResource(workflowErrorLabel(error)), Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
@@ -85,7 +86,7 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                     entry<ResultCheck> { route ->
                         val room = inspection.rooms.find { room -> room.checks.any { it.id.value == route.id } }
                         val check = room?.checks?.find { it.id.value == route.id }
-                        if (check != null) ResultCheckScreen(id, room, check, route.issue, model, back)
+                        if (check != null) ResultCheckScreen(id, room, check, route.issue, model, photographs, back)
                         else ResultMissing(back)
                     }
                     entry<ResultSummary> { route ->

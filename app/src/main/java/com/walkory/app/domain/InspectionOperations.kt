@@ -151,6 +151,44 @@ class InspectionOperations(private val clock: Clock = Clock.systemDefaultZone())
         }.validateAttachments()
     }
 
+    fun captionPhotograph(inspection: Inspection, owner: PhotographOwner, id: PhotographId, caption: String?): DomainResult<Inspection> =
+        changePhotographs(inspection, owner) { photos ->
+            if (photos.none { it.id == id }) DomainResult.Failure(DomainError.NotFound(RecordKind.PHOTOGRAPH))
+            else DomainResult.Success(photos.map { if (it.id == id) it.copy(caption = caption?.ifEmpty { null }) else it })
+        }
+
+    fun removePhotograph(inspection: Inspection, owner: PhotographOwner, id: PhotographId): DomainResult<Inspection> =
+        changePhotographs(inspection, owner) { photos ->
+            if (photos.none { it.id == id }) DomainResult.Failure(DomainError.NotFound(RecordKind.PHOTOGRAPH))
+            else DomainResult.Success(photos.filterNot { it.id == id })
+        }
+
+    private fun changePhotographs(
+        inspection: Inspection,
+        owner: PhotographOwner,
+        change: (List<Photograph>) -> DomainResult<List<Photograph>>,
+    ): DomainResult<Inspection> = changeCheck(inspection, when (owner) {
+        is PhotographOwner.Condition -> owner.checkId
+        is PhotographOwner.IssueEvidence -> owner.checkId
+    }) { check ->
+        when (owner) {
+            is PhotographOwner.Condition -> change(check.conditionPhotos).map { check.copy(conditionPhotos = it) }
+            is PhotographOwner.IssueEvidence -> {
+                val issue = check.issues.find { it.id == owner.issueId }
+                    ?: return@changeCheck DomainResult.Failure(DomainError.NotFound(RecordKind.ISSUE))
+                when (val result = change(issue.photos)) {
+                    is DomainResult.Failure -> result
+                    is DomainResult.Success -> {
+                        if (result.value.isEmpty() && issue.description.isNullOrBlank()) DomainResult.Failure(DomainError.EmptyIssue)
+                        else DomainResult.Success(check.copy(issues = check.issues.map {
+                            if (it.id == issue.id) it.copy(photos = result.value) else it
+                        }))
+                    }
+                }
+            }
+        }
+    }
+
     fun complete(inspection: Inspection, confirmUnchecked: Boolean = false): DomainResult<Inspection> {
         if (inspection.state == InspectionState.COMPLETED) return DomainResult.Success(inspection)
         val unchecked = inspection.progress().uncheckedChecks

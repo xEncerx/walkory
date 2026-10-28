@@ -119,4 +119,28 @@
         <item quantity="one">%d check is still unchecked. Complete anyway? You can continue editing later.</item>
         <item quantity="other">%d checks are still unchecked. Complete anyway? You can continue editing later.</item>
     </plurals>
+    <string name="inspections_media_condition">Condition photographs</string>
+    <string name="inspections_media_issue">Issue photographs</string>
+    <string name="inspections_media_add">Add photographs</string>
+    <string name="inspections_media_camera">Take a photograph</string>
+    <string name="inspections_media_picker">Choose photographs</string>
+    <string name="inspections_media_open">Open photograph</string>
+    <string name="inspections_media_importing">Copying photographs to private storage…</string>
+    <string name="inspections_media_invalid">One of the images cannot be read. No photographs from this selection were added.</string>
+    <string name="inspections_media_failed">Photographs could not be added. Existing records are unchanged. Select the images again to retry.</string>
+    <string name="inspections_media_camera_unavailable">Camera unavailable</string>
+    <string name="inspections_media_camera_help">You can choose existing photographs. If Android has blocked camera access, check the app permissions in system settings. Return here and retry manually.</string>
+    <string name="inspections_media_settings">Open app settings</string>
+    <string name="inspections_media_position">Photograph %1$d of %2$d</string>
+    <string name="inspections_media_previous">Previous</string>
+    <string name="inspections_media_next">Next</string>
+    <string name="inspections_media_caption_action">Edit caption</string>
+    <string name="inspections_media_caption">Caption — optional</string>
+    <string name="inspections_media_delete">Delete photograph</string>
+    <string name="inspections_media_delete_body">Delete only this private photograph and its caption. Other photographs and the gallery original are kept.</string>
+    <string name="inspections_media_last_photo">Add an issue description before deleting its last photograph, or delete the whole issue.</string>
+    <string name="inspections_media_reset_zoom">Reset zoom</string>
+    <string name="inspections_media_issue_autosaved">Imported photographs and this issue are saved immediately. Closing keeps them.</string>
+    <string name="inspections_media_storage_full">Not enough storage. No photographs from this selection were added. Free space and select them again.</string>
+    <string name="inspections_media_unreadable">This photograph cannot be displayed. The record and other photographs are kept.</string>
 </resources>

@@ -2,6 +2,8 @@ package com.walkory.app.data.local
 
 import androidx.room.withTransaction
 import com.walkory.app.domain.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class RoomInspectionRepository(
     private val database: WalkoryDatabase,
@@ -35,7 +37,14 @@ internal class RoomInspectionRepository(
         id: InspectionId,
         transform: (Inspection) -> DomainResult<Inspection>,
     ): DomainResult<Inspection> = storageResult {
-        attachments.coordinated {
+        attachments.coordinated { updateLocked(id, transform) }
+    }
+
+    /** Caller holds the attachment gate, including during import metadata promotion. */
+    private suspend fun updateLocked(
+        id: InspectionId,
+        transform: (Inspection) -> DomainResult<Inspection>,
+    ): DomainResult<Inspection> = storageResult {
             var removedPhotos = false
             val result = database.withTransaction {
                 val previous = dao.inspection(id.value)?.toDomain()
@@ -65,11 +74,67 @@ internal class RoomInspectionRepository(
             }
             if (result is DomainResult.Success && removedPhotos) {
                 val cleanup = attachments.cleanupPending()
-                if (cleanup is DomainResult.Failure) return@coordinated cleanup
+                if (cleanup is DomainResult.Failure) return@storageResult cleanup
             }
             result
+    }
+
+    /**
+     * Journal every allocated file before copying. The gate excludes cleanup and report staging;
+     * a killed process leaves only pending file IDs, never visible partial photographs.
+     */
+    suspend fun importPhotographs(
+        id: InspectionId,
+        owner: PhotographOwner,
+        count: Int,
+        newIssueDescription: String?,
+        copy: suspend (List<Photograph>) -> DomainResult<Unit>,
+    ): DomainResult<Inspection> = withContext(Dispatchers.IO) {
+        storageResult {
+            attachments.coordinated {
+                if (count == 0) return@coordinated DomainResult.Failure(DomainError.InvalidImage)
+                val photos = List(count) { Photograph(PhotographId.new(), LocalFileId.new()) }
+                val operations = InspectionOperations()
+                val transform: (Inspection) -> DomainResult<Inspection> = { initial ->
+                    if (newIssueDescription != null && owner is PhotographOwner.IssueEvidence) {
+                        operations.addIssue(initial, owner.checkId, newIssueDescription, photos, owner.issueId)
+                    } else {
+                        photos.fold<Photograph, DomainResult<Inspection>>(DomainResult.Success(initial)) { result, photo ->
+                            when (result) {
+                                is DomainResult.Failure -> result
+                                is DomainResult.Success -> operations.attachPhotograph(result.value, owner, photo)
+                            }
+                        }
+                    }
+                }
+                val previous = dao.inspection(id.value)?.toDomain()
+                    ?: return@coordinated DomainResult.Failure(DomainError.NotFound(RecordKind.INSPECTION))
+                val validation = transform(previous)
+                if (validation is DomainResult.Failure) return@coordinated validation
+                dao.insertFiles(photos.map { AttachmentFileEntity(it.fileId.value, pendingDeletion = true) })
+                try {
+                    val copied = copy(photos)
+                    if (copied is DomainResult.Failure) return@coordinated copied
+                    try {
+                        database.withTransaction {
+                            photos.forEach { dao.forgetDeletedFile(it.fileId.value) }
+                            when (val committed = updateLocked(id, transform)) {
+                                is DomainResult.Success -> committed
+                                is DomainResult.Failure -> throw ImportRejected(committed.error)
+                            }
+                        }
+                    } catch (rejected: ImportRejected) {
+                        DomainResult.Failure(rejected.error)
+                    }
+                } finally {
+                    // Also runs for cancellation. On process death, the same journal is retried.
+                    withContext(kotlinx.coroutines.NonCancellable) { attachments.cleanupPending() }
+                }
+            }
         }
     }
+
+    private class ImportRejected(val error: DomainError) : RuntimeException()
 
     override suspend fun delete(id: InspectionId): DomainResult<Unit> = storageResult {
         attachments.coordinated {

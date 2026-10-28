@@ -125,4 +125,28 @@
         <item quantity="many">%d пунктов ещё не проверены. Всё равно завершить? Позже можно продолжить редактирование.</item>
         <item quantity="other">%d пункта ещё не проверены. Всё равно завершить? Позже можно продолжить редактирование.</item>
     </plurals>
+    <string name="inspections_media_condition">Фото общего состояния</string>
+    <string name="inspections_media_issue">Фотографии замечания</string>
+    <string name="inspections_media_add">Добавить фотографии</string>
+    <string name="inspections_media_camera">Сделать снимок</string>
+    <string name="inspections_media_picker">Выбрать фотографии</string>
+    <string name="inspections_media_open">Открыть фотографию</string>
+    <string name="inspections_media_importing">Копирование фотографий в приватное хранилище…</string>
+    <string name="inspections_media_invalid">Одно из изображений не удалось прочитать. Фотографии из этого выбора не добавлены.</string>
+    <string name="inspections_media_failed">Не удалось добавить фотографии. Прежние данные не изменены. Для повтора выберите изображения ещё раз.</string>
+    <string name="inspections_media_camera_unavailable">Камера недоступна</string>
+    <string name="inspections_media_camera_help">Можно выбрать готовые фотографии. Если Android заблокировал камеру, проверьте разрешения приложения в системных настройках. После возвращения повторите действие вручную.</string>
+    <string name="inspections_media_settings">Открыть настройки приложения</string>
+    <string name="inspections_media_position">Фотография %1$d из %2$d</string>
+    <string name="inspections_media_previous">Предыдущее</string>
+    <string name="inspections_media_next">Следующее</string>
+    <string name="inspections_media_caption_action">Изменить подпись</string>
+    <string name="inspections_media_caption">Подпись — необязательно</string>
+    <string name="inspections_media_delete">Удалить фотографию</string>
+    <string name="inspections_media_delete_body">Будут удалены только эта локальная фотография и её подпись. Остальные фото и оригинал в галерее сохранятся.</string>
+    <string name="inspections_media_last_photo">Перед удалением последнего фото добавьте описание замечания или удалите замечание целиком.</string>
+    <string name="inspections_media_reset_zoom">Сбросить масштаб</string>
+    <string name="inspections_media_issue_autosaved">Импортированные фото и замечание сохраняются сразу. Закрытие их не удаляет.</string>
+    <string name="inspections_media_storage_full">Недостаточно места. Фотографии из этого выбора не добавлены. Освободите место и выберите их снова.</string>
+    <string name="inspections_media_unreadable">Не удалось показать эту фотографию. Запись и остальные фотографии сохранены.</string>
 </resources>

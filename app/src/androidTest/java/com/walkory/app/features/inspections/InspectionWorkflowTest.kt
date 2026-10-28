@@ -36,12 +36,15 @@ class InspectionWorkflowTest {
     private fun start(repository: InspectionRepository = fixture.inspections) {
         runBlocking { fixture.inspections.create(original).accepted() }
         model = InspectionWorkflowViewModel(repository, fixture.templates)
+        val photographs = com.walkory.app.features.media.PhotographViewModel(
+            com.walkory.app.platform.images.PhotographMedia(fixture.context, fixture.inspections, fixture.files), fixture.inspections, androidx.lifecycle.SavedStateHandle())
+        store.put("photographs", photographs)
         store.put("workflow", model)
         compose.setContent {
             keyboard = LocalSoftwareKeyboardController.current
             WalkoryTheme {
                 InspectionBrowser(CollectionState.Content(listOf(original)), original.id.value, expanded.value, {}, {}) {
-                    InspectionWorkflow(model, original.id, {}, InspectionCreationState(loadingTemplates = false), {})
+                    InspectionWorkflow(model, original.id, {}, InspectionCreationState(loadingTemplates = false), {}, photographs)
                 }
             }
         }

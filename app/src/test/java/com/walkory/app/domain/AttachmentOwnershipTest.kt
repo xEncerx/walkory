@@ -49,4 +49,24 @@ class AttachmentOwnershipTest {
         assertEquals(DomainResult.Failure(DomainError.NotFound(RecordKind.ISSUE)), operations.attachPhotograph(initial, PhotographOwner.IssueEvidence(initial.firstCheck().id, IssueId.new()), DomainFixtures.photo()))
         assertEquals(InspectionProgress(2, 0, 2, 0, 0), initial.progress())
     }
+    @Test fun captionsAndRemovalAreScopedAndCannotEmptyPhotoOnlyIssue() {
+        val initial = DomainFixtures.withRoom()
+        val check = initial.firstCheck().id
+        val condition = DomainFixtures.photo("Overview")
+        val evidence = DomainFixtures.photo("Detail")
+        val issued = operations.addIssue(initial, check, null, listOf(evidence)).value()
+        val issue = PhotographOwner.IssueEvidence(check, issued.firstCheck().issues.single().id)
+        val owner = PhotographOwner.Condition(check)
+        val attached = operations.attachPhotograph(issued, owner, condition).value()
+        val captioned = operations.captionPhotograph(attached, owner, condition.id, "Общий вид").value()
+        assertEquals("Общий вид", captioned.firstCheck().conditionPhotos.single().caption)
+        assertEquals("Detail", captioned.firstCheck().issues.single().photos.single().caption)
+        assertEquals(DomainResult.Failure(DomainError.NotFound(RecordKind.PHOTOGRAPH)), operations.removePhotograph(captioned, owner, evidence.id))
+        assertEquals(DomainResult.Failure(DomainError.EmptyIssue), operations.removePhotograph(captioned, issue, evidence.id))
+        val described = operations.editIssue(captioned, check, issue.issueId, "Scratch").value()
+        val removed = operations.removePhotograph(described, issue, evidence.id).value()
+        assertEquals(emptyList<Photograph>(), removed.firstCheck().issues.single().photos)
+        assertEquals(listOf(condition.copy(caption = "Общий вид")), removed.firstCheck().conditionPhotos)
+        assertEquals(CheckState.HAS_ISSUE, removed.firstCheck().state)
+    }
 }
