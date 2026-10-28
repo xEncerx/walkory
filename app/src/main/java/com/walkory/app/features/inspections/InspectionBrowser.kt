@@ -15,7 +15,8 @@ import com.walkory.app.ui_kit.*
 
 @Composable
 internal fun InspectionBrowser(records: CollectionState<Inspection>, selectedId: String?, expanded: Boolean, onSelect: (String) -> Unit,
-    onRetry: () -> Unit, detail: @Composable (Inspection) -> Unit) {
+    onRetry: () -> Unit, discovery: InspectionDiscovery, onDiscover: (InspectionDiscovery) -> Unit, detail: @Composable (Inspection) -> Unit) {
+    val visible = remember(records, discovery) { discovery.select((records as? CollectionState.Content)?.items.orEmpty()) }
     val currentDetail by rememberUpdatedState(detail)
     // Keep contextual navigation and modal input when the detail moves between pane layouts.
     val retainedDetail = remember { movableContentOf<Inspection> { currentDetail(it) } }
@@ -23,14 +24,15 @@ internal fun InspectionBrowser(records: CollectionState<Inspection>, selectedId:
         LazyColumn(Modifier.fillMaxSize().testTag("inspection_list"), contentPadding = PaddingValues(
             start = WalkorySpacing.medium, top = WalkorySpacing.medium, end = WalkorySpacing.medium, bottom = WalkoryLayout.floatingActionClearance),
             verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
+            item { InspectionHistoryControls(discovery, onDiscover) }
             when (records) {
                 CollectionState.Loading -> item { WalkoryLoading() }
                 CollectionState.Error -> item { WalkoryError(onRetry) }
                 is CollectionState.Content -> {
                     if (records.items.isEmpty()) item { WalkoryMessage(stringResource(R.string.inspections_empty_title), stringResource(R.string.inspections_empty_body)) }
-                    items(records.items, key = { it.id.value }) { inspection ->
-                        WalkoryRecordRow(inspection.details.name, inspection.details.property.address, inspection.id.value == selectedId,
-                            { onSelect(inspection.id.value) }, Modifier.testTag("inspection_${inspection.id.value}"))
+                    else if (visible.isEmpty()) item { WalkoryMessage(stringResource(R.string.inspections_no_results), stringResource(R.string.inspections_no_results_body)) }
+                    items(visible, key = { it.id.value }) { inspection ->
+                        InspectionHistoryRow(inspection, inspection.id.value == selectedId) { onSelect(inspection.id.value) }
                     }
                 }
             }

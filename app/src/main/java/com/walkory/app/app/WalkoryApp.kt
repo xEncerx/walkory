@@ -62,6 +62,8 @@ import com.walkory.app.features.media.PhotographViewModel
 import androidx.lifecycle.createSavedStateHandle
 import com.walkory.app.features.media.PhotographHost
 
+import com.walkory.app.features.objects.*
+import com.walkory.app.features.inspections.rememberInspectionHistoryModel
 @Composable
 internal fun WalkoryApp() {
     val application = LocalContext.current.applicationContext as WalkoryApplication
@@ -72,6 +74,10 @@ internal fun WalkoryApp() {
     val creation = rememberInspectionCreationModel(application.container.inspections, application.container.templates)
     val inspectionNavigation = rememberInspectionsNavigation()
     val workflow = rememberInspectionWorkflowModel(application.container.inspections, application.container.templates)
+    val history = rememberInspectionHistoryModel(application.container.inspections)
+    val properties = rememberPropertiesModel(application.container.properties, "property_workspace")
+    val propertyPicker = rememberPropertiesModel(application.container.properties, "inspection_property_picker")
+    val propertyNavigation = rememberPropertiesNavigation()
     val photoFactory = remember(application.container) { viewModelFactory {
         initializer { PhotographViewModel(application.container.photographs, application.container.inspections, createSavedStateHandle()) }
     } }
@@ -79,10 +85,20 @@ internal fun WalkoryApp() {
     WalkoryTheme {
         PhotographHost(photographs)
         WalkoryShell(
-            state, model::retry,
             onTemplatesReselect = { templateNavigation.returnToCatalog(templates) },
             onInspectionsReselect = { inspectionNavigation.reselect(creation) },
-            inspectionsContent = { expanded -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry, workflow, photographs) },
+            onObjectsReselect = { propertyNavigation.reselect(properties) },
+            objectsContent = { expanded, showInspections ->
+                PropertiesWorkspace(properties, state.objects, state.inspections, expanded, propertyNavigation, model::retry,
+                    { inspectionNavigation.select(it, propertyNavigation.selectedId()); showInspections() },
+                    { inspectionNavigation.begin(creation, it); showInspections() })
+            },
+            inspectionsContent = { expanded, showProperties -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry,
+                workflow, photographs, history, state.objects, propertyPicker) { id ->
+                    propertyNavigation.root()
+                    if ((state.objects as? CollectionState.Content)?.items?.any { it.id.value == id } == true) propertyNavigation.select(id)
+                    showProperties()
+                } },
             templatesContent = { expanded -> TemplatesWorkspace(templates, expanded, templateNavigation) },
         )
     }
@@ -92,12 +108,12 @@ internal typealias AreaContent = @Composable (Boolean) -> Unit
 
 @Composable
 internal fun WalkoryShell(
-    state: ShellState,
-    onRetry: () -> Unit,
     expanded: Boolean = useTwoPanes(),
     onTemplatesReselect: () -> Unit = {},
     onInspectionsReselect: () -> Unit = {},
-    inspectionsContent: AreaContent,
+    onObjectsReselect: () -> Unit = {},
+    objectsContent: @Composable (Boolean, () -> Unit) -> Unit,
+    inspectionsContent: @Composable (Boolean, () -> Unit) -> Unit,
     templatesContent: AreaContent,
 ) {
     var selectedArea by rememberSaveable { mutableStateOf(MainArea.INSPECTIONS) }
@@ -115,6 +131,7 @@ internal fun WalkoryShell(
         if (selectedArea == area) {
             if (area == MainArea.TEMPLATES) onTemplatesReselect()
             else if (area == MainArea.INSPECTIONS) onInspectionsReselect()
+            else if (area == MainArea.OBJECTS) onObjectsReselect()
             else while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
         } else selectedArea = area
     }
@@ -127,14 +144,6 @@ internal fun WalkoryShell(
     val openInformation: (Information) -> Unit = { page ->
         val destination = InformationRoute(page)
         if (backStack.last() != destination) backStack.add(destination)
-    }
-    val openRecord: (String) -> Unit = { id ->
-        val destination = RecordRoute(selectedArea, id)
-        if (backStack.last() != destination) {
-            // Adjacent selections replace the detail, rather than growing a tablet-only history.
-            if (backStack.last() is RecordRoute) backStack.removeAt(backStack.lastIndex)
-            backStack.add(destination)
-        }
     }
     val current = backStack.last()
     val title = when (current) {
@@ -161,7 +170,7 @@ internal fun WalkoryShell(
                 modifier = Modifier.weight(1f),
                 contentWindowInsets = WindowInsets.safeDrawing,
                 topBar = {
-                    if (selectedArea != MainArea.TEMPLATES && selectedArea != MainArea.INSPECTIONS) {
+                    if (selectedArea == MainArea.SETTINGS) {
                         WalkoryTopAppBar(stringResource(title), if (canGoBack) onBack else null)
                     }
                 },
@@ -205,14 +214,12 @@ internal fun WalkoryShell(
                                 entryProvider = entryProvider<NavKey> {
                                     entry<AreaRoute> { route ->
                                         if (route.area == MainArea.TEMPLATES) templatesContent(expanded)
-                                        else if (route.area == MainArea.INSPECTIONS) inspectionsContent(expanded)
-                                        else AreaScreen(route.area, state, null, null, expanded, openRecord, openInformation, onRetry)
-                                    }
-                                    entry<RecordRoute> { route ->
-                                        AreaScreen(route.area, state, route.id, null, expanded, openRecord, openInformation, onRetry)
+                                        else if (route.area == MainArea.INSPECTIONS) inspectionsContent(expanded) { selectedArea = MainArea.OBJECTS }
+                                        else if (route.area == MainArea.OBJECTS) objectsContent(expanded) { selectedArea = MainArea.INSPECTIONS }
+                                        else SettingsScreen(null, expanded, openInformation)
                                     }
                                     entry<InformationRoute> { route ->
-                                        AreaScreen(selectedArea, state, null, route.page, expanded, openRecord, openInformation, onRetry)
+                                        SettingsScreen(route.page, expanded, openInformation)
                                     }
                                 },
                             )

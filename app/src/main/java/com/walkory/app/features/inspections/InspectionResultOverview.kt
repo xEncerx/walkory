@@ -16,7 +16,7 @@ import com.walkory.app.ui_kit.*
 
 @Composable
 internal fun ResultOverviewScreen(record: InspectionResultState, model: InspectionWorkflowViewModel, onRoom: (RoomId) -> Unit,
-    onSummary: (Boolean) -> Unit, templates: InspectionCreationState, onRetryTemplates: () -> Unit) {
+    onSummary: (Boolean) -> Unit, templates: InspectionCreationState, onRetryTemplates: () -> Unit, actions: @Composable () -> Unit) {
     val inspection = record.inspection
     val progress = inspection.progress()
     var completing by rememberSaveable { mutableStateOf(false) }
@@ -34,6 +34,7 @@ internal fun ResultOverviewScreen(record: InspectionResultState, model: Inspecti
             Text(pluralStringResource(R.plurals.inspections_unchecked, progress.uncheckedChecks, progress.uncheckedChecks))
             Text(stringResource(R.string.inspections_issue_counts, progress.issueCount, progress.problematicChecks))
         }
+        item { actions() }
         items(inspection.rooms, key = { it.id.value }) { room ->
             val roomProgress = inspection.copy(rooms = listOf(room)).progress()
             WalkoryRecordRow(room.name, stringResource(R.string.inspections_room_progress, roomProgress.checkedChecks, roomProgress.totalChecks, roomProgress.issueCount), false,

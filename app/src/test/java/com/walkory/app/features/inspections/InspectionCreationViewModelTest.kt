@@ -28,6 +28,31 @@ class InspectionCreationViewModelTest {
     private fun model(repository: CreationRepository, handle: SavedStateHandle = SavedStateHandle()) =
         InspectionCreationViewModel(repository, CreationTemplates(), handle, clock).also { store.put("model-${handle.hashCode()}", it) }
 
+    @Test fun cardPreselectionRetainsRoleChoiceAndEditableSnapshotAcrossDraftRestoration() = runTest(dispatcher) {
+        val repository = CreationRepository()
+        val handle = SavedStateHandle()
+        val card = PropertyCard(PropertyId.new(), "Rental home", "Original address")
+        val model = model(repository, handle)
+        model.begin(card)
+        assertNull(model.state.value.draft!!.role)
+        assertEquals(card.address, model.state.value.draft!!.address)
+        model.role(InspectionRole.LANDLORD)
+        model.details("Return inspection", "Authored snapshot", "Inspector")
+        model.date(LocalDate.of(2031, 4, 5))
+        model.addRoom(RoomType.CUSTOM, "Room")
+        val restored = model(repository, SavedStateHandle(mapOf("inspection_draft" to handle.get<String>("inspection_draft"))))
+        restored.create(); runCurrent()
+        val saved = repository.rows.value.single()
+        assertEquals(card.id, saved.propertyId)
+        assertEquals("Authored snapshot", saved.details.property.address)
+        assertEquals(InspectionRole.LANDLORD, saved.details.role)
+        assertEquals(LocalDate.of(2031, 4, 5), saved.details.date)
+        restored.begin(card)
+        restored.property(null)
+        assertNull(restored.state.value.draft!!.propertyId)
+        assertEquals(card.address, restored.state.value.draft!!.address)
+    }
+
     @Test fun validationRetainsInputAndCancellationNeverCreatesRecords() = runTest(dispatcher) {
         val repository = CreationRepository()
         val model = model(repository)

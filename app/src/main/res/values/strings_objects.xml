@@ -3,4 +3,30 @@
     <string name="objects_title">Properties</string>
     <string name="objects_empty_title">No property cards yet</string>
     <string name="objects_empty_body">Property cards group inspections of the same home. Inspections can also exist independently.</string>
+    <string name="objects_new">Add property</string>
+    <string name="objects_edit">Edit property</string>
+    <string name="objects_create">Create property</string>
+    <string name="objects_name">Name *</string>
+    <string name="objects_address">Address *</string>
+    <string name="objects_snapshot_notice">Each inspection keeps its own address. Editing this card does not change past inspections.</string>
+    <string name="objects_delete">Delete card</string>
+    <string name="objects_delete_title">Delete “%1$s”?</string>
+    <string name="objects_delete_body">Only the property card is removed. All linked inspections, their address snapshots and photographs are kept as standalone records.</string>
+    <string name="objects_inspect">New inspection here</string>
+    <string name="objects_history">Inspection history</string>
+    <string name="objects_history_empty">No linked inspections</string>
+    <string name="objects_history_empty_body">Create an inspection here or link an existing one. Standalone inspections remain in the main history.</string>
+    <string name="objects_link">Property card — optional</string>
+    <string name="objects_linked">Linked to a property</string>
+    <string name="objects_standalone">Standalone inspection</string>
+    <string name="objects_standalone_body">No card needed. Detaching keeps the inspection address, results and photographs.</string>
+    <string name="objects_link_notice">Linking or detaching does not change this inspection’s address snapshot.</string>
+    <string name="objects_discard_title">Discard property edits?</string>
+    <string name="objects_discard_body">Only uncommitted card edits will be discarded. Saved inspections are unchanged.</string>
+    <string name="objects_discard">Discard edits</string>
+    <string name="objects_summary">%1$s · %2$s</string>
+    <plurals name="objects_inspections">
+        <item quantity="one">%d inspection</item>
+        <item quantity="other">%d inspections</item>
+    </plurals>
 </resources>

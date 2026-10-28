@@ -143,4 +143,22 @@
     <string name="inspections_media_issue_autosaved">Imported photographs and this issue are saved immediately. Closing keeps them.</string>
     <string name="inspections_media_storage_full">Not enough storage. No photographs from this selection were added. Free space and select them again.</string>
     <string name="inspections_media_unreadable">This photograph cannot be displayed. The record and other photographs are kept.</string>
+    <string name="inspections_search">Name or address</string>
+    <string name="inspections_filters">Filters and sorting</string>
+    <string name="inspections_filter_role">Role</string>
+    <string name="inspections_filter_status">Status</string>
+    <string name="inspections_filter_sort">Sort order</string>
+    <string name="inspections_any">Any</string>
+    <string name="inspections_sort_newest">Newest modified first</string>
+    <string name="inspections_sort_oldest">Oldest modified first</string>
+    <string name="inspections_sort_name">Name</string>
+    <string name="inspections_reset">Reset</string>
+    <string name="inspections_apply">Apply</string>
+    <string name="inspections_no_results">No matching inspections</string>
+    <string name="inspections_no_results_body">Try another name or address, or reset the filters. Your records are kept.</string>
+    <string name="inspections_history_summary">%1$s\n%2$s · %3$s · %4$s\n%5$s</string>
+    <string name="inspections_delete">Delete inspection</string>
+    <string name="inspections_delete_title">Delete “%1$s”?</string>
+    <string name="inspections_delete_body">Delete this inspection, its rooms, checks, issues and private photographs. Property cards, templates, other inspections, gallery originals and exported PDF reports are kept.</string>
+    <string name="inspections_delete_failed">The inspection could not be deleted. It is kept; retry the deletion.</string>
 </resources>

@@ -149,4 +149,22 @@
     <string name="inspections_media_issue_autosaved">Импортированные фото и замечание сохраняются сразу. Закрытие их не удаляет.</string>
     <string name="inspections_media_storage_full">Недостаточно места. Фотографии из этого выбора не добавлены. Освободите место и выберите их снова.</string>
     <string name="inspections_media_unreadable">Не удалось показать эту фотографию. Запись и остальные фотографии сохранены.</string>
+    <string name="inspections_search">Название или адрес</string>
+    <string name="inspections_filters">Фильтры и сортировка</string>
+    <string name="inspections_filter_role">Роль</string>
+    <string name="inspections_filter_status">Состояние</string>
+    <string name="inspections_filter_sort">Сортировка</string>
+    <string name="inspections_any">Любое</string>
+    <string name="inspections_sort_newest">Сначала недавно изменённые</string>
+    <string name="inspections_sort_oldest">Сначала давно изменённые</string>
+    <string name="inspections_sort_name">По названию</string>
+    <string name="inspections_reset">Сбросить</string>
+    <string name="inspections_apply">Применить</string>
+    <string name="inspections_no_results">Совпадений нет</string>
+    <string name="inspections_no_results_body">Попробуйте другое название или адрес либо сбросьте фильтры. Записи сохранены.</string>
+    <string name="inspections_history_summary">%1$s\n%2$s · %3$s · %4$s\n%5$s</string>
+    <string name="inspections_delete">Удалить осмотр</string>
+    <string name="inspections_delete_title">Удалить «%1$s»?</string>
+    <string name="inspections_delete_body">Будут удалены этот осмотр, его помещения, проверки, замечания и локальные фотографии. Карточки объектов, шаблоны, другие осмотры, оригиналы в галерее и экспортированные PDF сохранятся.</string>
+    <string name="inspections_delete_failed">Не удалось удалить осмотр. Он сохранён; повторите удаление.</string>
 </resources>

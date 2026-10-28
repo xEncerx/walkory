@@ -24,7 +24,7 @@ internal data class PreparedRoom(
 @Serializable
 internal data class InspectionDraft(
     val id: String, val role: InspectionRole? = null, val name: String = "", val address: String = "",
-    val date: String, val inspector: String = "", val rooms: List<PreparedRoom> = emptyList(),
+    val date: String, val inspector: String = "", val rooms: List<PreparedRoom> = emptyList(), val propertyId: String? = null,
 )
 
 internal data class InspectionCreationState(
@@ -66,8 +66,9 @@ internal class InspectionCreationViewModel(
 
     fun setLanguage(value: AppLanguage) { language.value = value }
     fun retryTemplates() { mutableState.update { it.copy(loadingTemplates = true, templateError = false) }; revision.update { it + 1 } }
-    fun begin() {
-        store(InspectionDraft(InspectionId.new().value, date = LocalDate.now(clock).toString()))
+    fun begin(property: PropertyCard? = null) {
+        store(InspectionDraft(InspectionId.new().value, date = LocalDate.now(clock).toString(),
+            address = property?.address.orEmpty(), propertyId = property?.id?.value))
         mutableState.update { it.copy(validation = false, saveStatus = SaveStatus.IDLE, confirmDiscard = false) }
     }
     private fun store(draft: InspectionDraft?) {
@@ -82,6 +83,9 @@ internal class InspectionCreationViewModel(
     fun role(role: InspectionRole) = change { it.copy(role = role) }
     fun details(name: String, address: String, inspector: String) = change { it.copy(name = name, address = address, inspector = inspector) }
     fun date(date: LocalDate) = change { it.copy(date = date.toString()) }
+    fun property(property: PropertyCard?) = change {
+        it.copy(propertyId = property?.id?.value, address = property?.address ?: it.address)
+    }
     fun validateDetails(): Boolean {
         mutableState.update { it.copy(validation = true) }
         return state.value.draft?.let { it.role != null && it.name.isNotBlank() && it.address.isNotBlank() && parsedDate(it) != null } == true
@@ -132,7 +136,8 @@ internal class InspectionCreationViewModel(
     fun create() {
         if (state.value.saveStatus == SaveStatus.SAVING || !validateDetails() || !validateRooms()) return
         val draft = state.value.draft ?: return
-        val prepared = InspectionOperations(clock).create(draft.name, draft.address, draft.role!!, parsedDate(draft)!!, draft.inspector.ifBlank { null })
+        val prepared = InspectionOperations(clock).create(draft.name, draft.address, draft.role!!, parsedDate(draft)!!,
+            draft.inspector.ifBlank { null }, draft.propertyId?.let(::PropertyId))
         if (prepared !is DomainResult.Success) return
         val inspection = prepared.value.copy(id = InspectionId(draft.id), rooms = draft.rooms.map { room ->
             InspectionRoom(RoomId(room.id), room.type, room.name, room.checks.map { InspectionCheck(CheckId(it.id), it.title, it.guidance.ifBlank { null }) })

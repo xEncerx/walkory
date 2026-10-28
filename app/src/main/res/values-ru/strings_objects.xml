@@ -3,4 +3,32 @@
     <string name="objects_title">Объекты</string>
     <string name="objects_empty_title">Квартир пока нет</string>
     <string name="objects_empty_body">Карточки объединяют осмотры одной квартиры. Можно работать и с самостоятельными осмотрами.</string>
+    <string name="objects_new">Добавить объект</string>
+    <string name="objects_edit">Изменить объект</string>
+    <string name="objects_create">Создать объект</string>
+    <string name="objects_name">Название *</string>
+    <string name="objects_address">Адрес *</string>
+    <string name="objects_snapshot_notice">Каждый осмотр хранит свой адрес. Изменение карточки не меняет прошлые осмотры.</string>
+    <string name="objects_delete">Удалить карточку</string>
+    <string name="objects_delete_title">Удалить «%1$s»?</string>
+    <string name="objects_delete_body">Удалится только карточка объекта. Все привязанные осмотры, их адреса и фотографии сохранятся как самостоятельные записи.</string>
+    <string name="objects_inspect">Новый осмотр здесь</string>
+    <string name="objects_history">История осмотров</string>
+    <string name="objects_history_empty">Привязанных осмотров пока нет</string>
+    <string name="objects_history_empty_body">Создайте осмотр здесь или привяжите существующий. Самостоятельные осмотры остаются в общей истории.</string>
+    <string name="objects_link">Карточка объекта — необязательно</string>
+    <string name="objects_linked">Привязан к объекту</string>
+    <string name="objects_standalone">Самостоятельный осмотр</string>
+    <string name="objects_standalone_body">Карточка не нужна. При отвязке адрес, результаты и фотографии осмотра сохраняются.</string>
+    <string name="objects_link_notice">Привязка и отвязка не меняют адрес этого осмотра.</string>
+    <string name="objects_discard_title">Отменить изменения карточки?</string>
+    <string name="objects_discard_body">Будут отменены только несохранённые изменения карточки. Сохранённые осмотры не изменятся.</string>
+    <string name="objects_discard">Отменить изменения</string>
+    <string name="objects_summary">%1$s · %2$s</string>
+    <plurals name="objects_inspections">
+        <item quantity="one">%d осмотр</item>
+        <item quantity="few">%d осмотра</item>
+        <item quantity="many">%d осмотров</item>
+        <item quantity="other">%d осмотра</item>
+    </plurals>
 </resources>

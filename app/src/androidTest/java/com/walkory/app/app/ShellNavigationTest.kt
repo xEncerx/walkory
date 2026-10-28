@@ -16,9 +16,25 @@ import com.walkory.app.domain.PropertyId
 import com.walkory.app.ui_kit.WalkoryTheme
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.runtime.Composable
+import com.walkory.app.data.local.PersistenceFixture
+import com.walkory.app.features.objects.*
+import org.junit.After
 
 class ShellNavigationTest {
     @get:Rule val compose = createComposeRule()
+    private val fixture = PersistenceFixture()
+    @After fun close() { fixture.close() }
+
+    @Composable private fun Shell(expanded: Boolean) {
+        val model = rememberPropertiesModel(fixture.properties, "shell_properties")
+        val navigation = rememberPropertiesNavigation()
+        WalkoryShell(expanded = expanded, objectsContent = { wide, _ ->
+            PropertiesWorkspace(model, state.objects, state.inspections, wide, navigation, {}, {}, {})
+        }, inspectionsContent = { _, _ -> androidx.compose.material3.Text("Inspection area fixture") }) {
+            androidx.compose.material3.Text("Template area fixture")
+        }
+    }
 
     private val state = ShellState(
         inspections = CollectionState.Content(emptyList()),
@@ -31,32 +47,32 @@ class ShellNavigationTest {
     @Test fun selectionSurvivesTabSwitchRestorationAndResizeWithoutDuplicatingBackStack() {
         var expanded by mutableStateOf(false)
         val restoration = StateRestorationTester(compose)
-        restoration.setContent { WalkoryTheme { WalkoryShell(state, {}, expanded, inspectionsContent = { androidx.compose.material3.Text("Inspection area fixture") }) { androidx.compose.material3.Text("Template area fixture") } } }
+        restoration.setContent { WalkoryTheme { Shell(expanded) } }
         compose.onNodeWithTag("nav_OBJECTS").performClick()
-        compose.onNodeWithTag("record_sample-home").performClick()
-        compose.onNodeWithTag("record_detail").assertIsDisplayed()
+        compose.onNodeWithTag("property_sample-home").performClick()
+        compose.onNodeWithTag("property_detail").assertIsDisplayed()
         compose.onNodeWithText("Пользовательский адрес").assertIsDisplayed()
         compose.onNodeWithTag("nav_TEMPLATES").performClick()
         compose.onNodeWithTag("nav_OBJECTS").performClick()
-        compose.onNodeWithTag("record_detail").assertIsDisplayed()
+        compose.onNodeWithTag("property_detail").assertIsDisplayed()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithTag("nav_OBJECTS").assertIsSelected()
-        compose.onNodeWithTag("record_detail").assertIsDisplayed()
+        compose.onNodeWithTag("property_detail").assertIsDisplayed()
         compose.runOnIdle { expanded = true }
         compose.onNodeWithTag("two_panes").assertIsDisplayed()
-        compose.onNodeWithTag("record_sample-home").assertIsSelected()
-        compose.onNodeWithTag("record_other-home").performClick()
+        compose.onNodeWithTag("property_sample-home").assertIsSelected()
+        compose.onNodeWithTag("property_other-home").performClick()
         compose.runOnIdle { expanded = false }
         compose.onNodeWithText("Other address").assertIsDisplayed()
         Espresso.pressBack()
-        compose.onNodeWithTag("record_list").assertIsDisplayed()
-        compose.onNodeWithTag("record_detail").assertDoesNotExist()
+        compose.onNodeWithTag("property_list").assertIsDisplayed()
+        compose.onNodeWithTag("property_detail").assertDoesNotExist()
         Espresso.pressBack()
         compose.onNodeWithTag("nav_INSPECTIONS").assertIsSelected()
     }
 
     @Test fun nestedInformationReturnsToCallingContextAndRetainsInactiveTabStack() {
-        compose.setContent { WalkoryTheme { WalkoryShell(state, {}, false, inspectionsContent = { androidx.compose.material3.Text("Inspection area fixture") }) { androidx.compose.material3.Text("Template area fixture") } } }
+        compose.setContent { WalkoryTheme { Shell(false) } }
         compose.onNodeWithTag("nav_SETTINGS").performClick()
         // Use localized labels from the same Android resource boundary as the actual screen.
         val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext

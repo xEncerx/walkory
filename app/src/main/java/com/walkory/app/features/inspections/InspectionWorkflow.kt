@@ -6,6 +6,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -18,6 +20,9 @@ import androidx.compose.animation.togetherWith
 import com.walkory.app.R
 import com.walkory.app.domain.*
 import com.walkory.app.ui_kit.*
+import com.walkory.app.app.CollectionState
+import com.walkory.app.features.objects.PropertiesViewModel
+import com.walkory.app.features.objects.PropertyPicker
 import kotlinx.serialization.Serializable
 
 @Serializable private data object ResultOverview : NavKey
@@ -33,7 +38,8 @@ internal fun rememberInspectionWorkflowModel(inspections: InspectionRepository, 
 
 @Composable
 internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: InspectionId, onBack: () -> Unit,
-    templates: InspectionCreationState, onRetryTemplates: () -> Unit, photographs: com.walkory.app.features.media.PhotographViewModel) {
+    templates: InspectionCreationState, onRetryTemplates: () -> Unit, photographs: com.walkory.app.features.media.PhotographViewModel,
+    properties: CollectionState<PropertyCard>, propertyPicker: PropertiesViewModel, onRetryProperties: () -> Unit, history: InspectionHistoryViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
     val record = state.records[id]
     when {
@@ -42,6 +48,9 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
         record == null -> { WalkoryMessage(stringResource(R.string.common_missing_title), stringResource(R.string.common_missing_body)); return }
     }
     val inspection = record.inspection
+    val historyState by history.state.collectAsStateWithLifecycle()
+    var choosingProperty by rememberSaveable { mutableStateOf(false) }
+    var deleting by rememberSaveable { mutableStateOf(false) }
     val stack = rememberNavBackStack(ResultOverview)
     val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) else onBack() }
     BackHandler(onBack = back)
@@ -73,7 +82,20 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                 predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                 entryProvider = entryProvider<NavKey> {
                     entry<ResultOverview> {
-                        ResultOverviewScreen(record, model, { stack.add(ResultRoom(it.value)) }, { stack.add(ResultSummary(it)) }, templates, onRetryTemplates)
+                        ResultOverviewScreen(record, model, { stack.add(ResultRoom(it.value)) }, { stack.add(ResultSummary(it)) }, templates, onRetryTemplates) {
+                            val linked = (properties as? CollectionState.Content)?.items?.find { it.id == inspection.propertyId }
+                            OutlinedButton({ choosingProperty = true }, enabled = historyState.deletingId == null,
+                                modifier = Modifier.testTag("result_property")) {
+                                Text(linked?.name ?: stringResource(if (inspection.propertyId == null) R.string.objects_standalone else R.string.objects_link))
+                            }
+                            Text(stringResource(R.string.objects_link_notice))
+                            TextButton({ deleting = true }, enabled = historyState.deletingId == null && model.canDelete(id),
+                                modifier = Modifier.testTag("result_delete_inspection")) { Text(stringResource(R.string.inspections_delete)) }
+                            if (historyState.deletingId == id) WalkoryLoading()
+                            if (historyState.deleteError != null && historyState.deleteError != DomainError.AttachmentCleanupPending) {
+                                Text(stringResource(R.string.inspections_delete_failed), color = MaterialTheme.colorScheme.error)
+                            }
+                        }
                     }
                     entry<ResultRoom> { route ->
                         val room = inspection.rooms.find { it.id.value == route.id }
@@ -95,6 +117,11 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                 })
         }
     }
+    if (choosingProperty) PropertyPicker(properties, inspection.propertyId?.value, propertyPicker,
+        { model.linkProperty(id, it?.id); choosingProperty = false }, onRetryProperties, { choosingProperty = false })
+    if (deleting) WalkoryConfirmation(stringResource(R.string.inspections_delete_title, inspection.details.name),
+        stringResource(R.string.inspections_delete_body), stringResource(R.string.inspections_delete),
+        { if (model.canDelete(id)) history.delete(id); deleting = false }, { deleting = false })
 }
 
 @Composable private fun ResultMissing(onBack: () -> Unit) {

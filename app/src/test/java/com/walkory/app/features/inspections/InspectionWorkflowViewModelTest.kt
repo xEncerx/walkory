@@ -22,6 +22,24 @@ class InspectionWorkflowViewModelTest {
     private fun model(repository: WorkflowRepository, templates: WorkflowTemplates = WorkflowTemplates()) =
         InspectionWorkflowViewModel(repository, templates).also { store.put("workflow", it) }
 
+    @Test fun externalCardRemovalIsObservedEvenWhenInspectionModificationTimeIsUnchanged() = runTest(dispatcher) {
+        val original = DomainFixtures.withRoom().copy(propertyId = PropertyId.new())
+        val repository = WorkflowRepository(original)
+        val model = model(repository)
+        runCurrent()
+        val detached = original.copy(propertyId = null)
+        repository.durable = detached
+        repository.emissions.value = DomainResult.Success(listOf(detached))
+        runCurrent()
+        assertEquals(detached, model.record(original.id).inspection)
+        model.comment(original.id, original.firstCheck().id, "After card removal")
+        assertFalse(model.canDelete(original.id))
+        advanceUntilIdle()
+        assertNull(repository.durable.propertyId)
+        assertEquals("After card removal", repository.durable.firstCheck().comment)
+        assertTrue(model.canDelete(original.id))
+    }
+
     @Test fun rapidEditsStayResponsiveAndOldCommitsAndFlowEmissionsCannotReplaceNewInput() = runTest(dispatcher) {
         val original = DomainFixtures.withRoom()
         val repository = WorkflowRepository(original)

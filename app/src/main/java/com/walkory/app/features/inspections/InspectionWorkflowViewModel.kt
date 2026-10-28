@@ -51,7 +51,8 @@ internal class InspectionWorkflowViewModel(
                                 // pre-commit snapshots, and never replace uncommitted editable input.
                                 val keep = current != null && (queue?.edits?.isNotEmpty() == true ||
                                     inspection.modifiedAt < current.inspection.modifiedAt ||
-                                    (inspection.modifiedAt == current.inspection.modifiedAt && inspection != current.inspection))
+                                    (inspection.modifiedAt == current.inspection.modifiedAt &&
+                                        inspection != current.inspection.copy(propertyId = inspection.propertyId)))
                                 inspection.id to if (keep) current else current?.copy(inspection = inspection) ?: InspectionResultState(inspection)
                             }.toMutableMap()
                             old.records.forEach { (id, record) -> if (queues[id]?.edits?.isNotEmpty() == true) records.putIfAbsent(id, record) }
@@ -165,6 +166,8 @@ internal class InspectionWorkflowViewModel(
     fun removePhoto(id: InspectionId, owner: PhotographOwner, photo: PhotographId) =
         edit(id) { operations.removePhotograph(it, owner, photo) }
     fun complete(id: InspectionId, confirmed: Boolean) = edit(id) { operations.complete(it, confirmed) }
+    fun linkProperty(id: InspectionId, propertyId: PropertyId?) = edit(id) { operations.linkProperty(it, propertyId) }
+    fun canDelete(id: InspectionId): Boolean = queues[id]?.let { !it.running && it.edits.isEmpty() && !it.cleanupPending } != false
 
     fun saveTemplate(id: InspectionId, roomId: RoomId, name: String) {
         val record = state.value.records[id] ?: return

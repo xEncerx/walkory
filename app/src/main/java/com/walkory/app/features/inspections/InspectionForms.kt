@@ -47,7 +47,8 @@ internal fun InspectionRole.label() = if (this == InspectionRole.TENANT) R.strin
 internal fun formattedDate(date: LocalDate): String = date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(LocalConfiguration.current.locales[0]))
 
 @Composable
-internal fun InspectionDetailsForm(state: InspectionCreationState, onDetails: (String, String, String) -> Unit, onDate: (LocalDate) -> Unit, onNext: () -> Unit) {
+internal fun InspectionDetailsForm(state: InspectionCreationState, onDetails: (String, String, String) -> Unit, onDate: (LocalDate) -> Unit,
+    propertyName: String?, onProperty: () -> Unit, onNext: () -> Unit) {
     val draft = state.draft ?: return
     var showDate by rememberSaveable { mutableStateOf(false) }
     InspectionForm("inspection_details") {
@@ -61,6 +62,9 @@ internal fun InspectionDetailsForm(state: InspectionCreationState, onDetails: (S
         }
         OutlinedTextField(draft.inspector, { onDetails(draft.name, draft.address, it) }, label = { Text(stringResource(R.string.inspections_inspector)) },
             modifier = Modifier.fillMaxWidth().testTag("inspection_inspector"))
+        OutlinedButton(onProperty, Modifier.fillMaxWidth().testTag("inspection_property")) {
+            Text(propertyName ?: stringResource(R.string.objects_link))
+        }
         Button(onNext, Modifier.testTag("inspection_details_next")) { Text(stringResource(R.string.inspections_next_rooms)) }
     }
     if (showDate) InspectionDateDialog(LocalDate.parse(draft.date), { onDate(it); showDate = false }, { showDate = false })

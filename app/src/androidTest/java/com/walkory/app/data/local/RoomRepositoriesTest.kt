@@ -53,6 +53,29 @@ class RoomRepositoriesTest {
         }
     }
 
+    @Test fun explicitLinkRelinkDetachAndMissingCardRejectionKeepCompletedSnapshotAndEveryPhotograph() = runBlocking {
+        PersistenceFixture().use { fixture ->
+            val original = PersistenceRecords.inspection()
+            fixture.inspections.create(original).accepted()
+            fixture.writePhotos(original)
+            val first = PersistenceRecords.card()
+            val second = PersistenceRecords.card().copy(address = "Another address")
+            listOf(first, second).forEach { fixture.properties.save(it).accepted() }
+            for (link in listOf(first.id, second.id, null)) {
+                fixture.inspections.update(original.id) { PersistenceRecords.operations.linkProperty(it, link) }.accepted()
+                fixture.reopen()
+                val expected = original.copy(propertyId = link)
+                assertEquals(expected, fixture.inspections.read(original.id))
+                for (check in expected.rooms.flatMap { it.checks }) for (photo in check.conditionPhotos + check.issues.flatMap { it.photos }) {
+                    assertTrue(fixture.files.resolve(photo.fileId).isFile)
+                }
+            }
+            assertEquals(DomainResult.Failure(DomainError.NotFound(RecordKind.PROPERTY)),
+                fixture.inspections.update(original.id) { PersistenceRecords.operations.linkProperty(it, PropertyId.new()) })
+            assertEquals(original, fixture.inspections.read(original.id))
+        }
+    }
+
     @Test fun templateChangesAndDeletionNeverRewriteCopiedInspectionContent() = runBlocking {
         PersistenceFixture().use { fixture ->
             val template = PersistenceRecords.template()

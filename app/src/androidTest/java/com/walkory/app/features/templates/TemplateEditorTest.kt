@@ -136,9 +136,10 @@ class TemplateEditorTest {
                 val templateModel = rememberTemplatesViewModel(repository)
                 val navigation = rememberTemplatesNavigation()
                 com.walkory.app.app.WalkoryShell(
-                    com.walkory.app.app.ShellState(), {}, false,
+                    expanded = false,
                     onTemplatesReselect = { navigation.returnToCatalog(templateModel) },
-                    inspectionsContent = { androidx.compose.material3.Text("Inspection area fixture") },
+                    inspectionsContent = { _, _ -> androidx.compose.material3.Text("Inspection area fixture") },
+                    objectsContent = { _, _ -> androidx.compose.material3.Text("Property area fixture") },
                 ) { expanded ->
                     TemplatesWorkspace(templateModel, expanded, navigation)
                 }

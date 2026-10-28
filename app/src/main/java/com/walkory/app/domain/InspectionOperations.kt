@@ -198,6 +198,10 @@ class InspectionOperations(private val clock: Clock = Clock.systemDefaultZone())
         return DomainResult.Success(inspection.copy(state = InspectionState.COMPLETED, modifiedAt = clock.instant()))
     }
 
+    /** Linking changes grouping only; the inspection owns its original address snapshot. */
+    fun linkProperty(inspection: Inspection, propertyId: PropertyId?): DomainResult<Inspection> =
+        DomainResult.Success(inspection.copy(propertyId = propertyId, modifiedAt = clock.instant()))
+
     /** Card deletion changes only the link; authored metadata, results and files remain owned here. */
     fun detachProperty(inspection: Inspection, removedPropertyId: PropertyId): Inspection =
         if (inspection.propertyId != removedPropertyId) inspection

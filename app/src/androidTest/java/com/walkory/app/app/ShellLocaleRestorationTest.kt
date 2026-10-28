@@ -29,18 +29,18 @@ class ShellLocaleRestorationTest {
         assertTrue(runBlocking { properties.save(property) } is DomainResult.Success)
         try {
             compose.onNodeWithTag("nav_OBJECTS").performClick()
-            compose.waitUntil(10_000) { compose.onAllNodes(androidx.compose.ui.test.hasTestTag("record_${property.id.value}")).fetchSemanticsNodes().isNotEmpty() }
-            compose.onNodeWithTag("record_${property.id.value}").performClick()
+            compose.waitUntil(10_000) { compose.onAllNodes(androidx.compose.ui.test.hasTestTag("property_${property.id.value}")).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("property_${property.id.value}").performClick()
             compose.activityRule.scenario.onActivity { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ru")) }
             compose.waitForIdle()
             compose.activityRule.scenario.onActivity { assertEquals("ru", it.resources.configuration.locales[0].language) }
             compose.onNodeWithTag("nav_OBJECTS").assertIsSelected()
-            compose.onNodeWithTag("record_detail").assertIsDisplayed()
+            compose.onNodeWithTag("property_detail").assertIsDisplayed()
             compose.onNodeWithText(property.name).assertIsDisplayed()
             compose.onNodeWithText(property.address).assertIsDisplayed()
             compose.activityRule.scenario.recreate()
             compose.onNodeWithTag("nav_OBJECTS").assertIsSelected()
-            compose.onNodeWithTag("record_detail").assertIsDisplayed()
+            compose.onNodeWithTag("property_detail").assertIsDisplayed()
             compose.onNodeWithText(property.address).assertIsDisplayed()
         } finally {
             assertTrue(runBlocking { properties.deleteAndDetach(property.id) } is DomainResult.Success)
