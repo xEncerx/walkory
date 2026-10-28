@@ -84,6 +84,7 @@ internal fun InspectionsWorkspace(
     history: InspectionHistoryViewModel,
     properties: CollectionState<PropertyCard>,
     propertyPicker: PropertiesViewModel,
+    reports: com.walkory.app.features.reports.ReportViewModel,
     onReturnToProperty: (String) -> Unit,
 ) {
     val state by model.state.collectAsStateWithLifecycle()
@@ -147,7 +148,7 @@ internal fun InspectionsWorkspace(
             }
         },
         floatingActionButton = {
-            if (current == InspectionListRoute || (expanded && current is InspectionOverviewRoute)) {
+            if (current == InspectionListRoute) {
                 FloatingActionButton({ navigation.begin(model) }, Modifier.testTag("inspection_new")) {
                     WalkoryIcon(Icons.Rounded.Add, description = stringResource(R.string.inspections_new))
                 }
@@ -166,7 +167,8 @@ internal fun InspectionsWorkspace(
                     key(route.id) {
                         InspectionBrowser(records, route.id, expanded, select, onRetry, historyState.discovery, history::discover) { inspection ->
                             InspectionWorkflow(workflow, inspection.id, back, state, model::retryTemplates, photographs,
-                                properties, propertyPicker, onRetry, history)
+                                properties, propertyPicker, onRetry, history, reports,
+                                if (expanded) ({ navigation.begin(model) }) else null)
                         }
                     }
                 }

@@ -32,7 +32,7 @@ class AndroidPdfCompatibilityTest {
         val directory = File(instrumentation.targetContext.cacheDir, "pdf-compatibility")
         check(directory.isDirectory || directory.mkdirs())
         val output = File(directory, "unicode-pagination.pdf")
-        val fontBytes = instrumentation.context.assets.open("fonts/NotoSans-Regular.ttf").use {
+        val fontBytes = instrumentation.targetContext.assets.open("fonts/NotoSans-Regular.ttf").use {
             it.readBytes()
         }
         val font = PdfFontFactory.createFont(

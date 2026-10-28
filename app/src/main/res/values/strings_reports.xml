@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reports_title">Full PDF report</string>
+    <string name="reports_generate">Generate PDF</string>
+    <string name="reports_regenerate">Generate again</string>
+    <string name="reports_contents">All checks and states, comments, individual issues, condition and issue photographs with captions.</string>
+    <string name="reports_unchecked_notice">Unchecked points will be explicitly identified in the report.</string>
+    <string name="reports_wait_saved">Wait until all changes are saved before generating the report.</string>
+    <string name="reports_staging">Collecting checks and photographs…</string>
+    <string name="reports_rendering">Preparing checks: %1$d / %2$d</string>
+    <string name="reports_finalizing">Finishing PDF…</string>
+    <string name="reports_cancel">Cancel generation</string>
+    <string name="reports_cancelled">Generation cancelled. Inspection data is unchanged.</string>
+    <plurals name="reports_ready">
+        <item quantity="one">PDF generated: %1$d page. Inspection data is unchanged.</item>
+        <item quantity="other">PDF generated: %1$d pages. Inspection data is unchanged.</item>
+    </plurals>
+    <string name="reports_error_storage">Cannot write the PDF. Check available device storage and try again. Inspection data is unchanged.</string>
+    <string name="reports_error_full">Not enough storage to generate the report. Free space and try again.</string>
+    <string name="reports_error_photo">A required photograph cannot be read. Check the inspection photographs and try again; no incomplete PDF was created.</string>
+    <string name="reports_error_missing">The inspection is no longer available.</string>
+    <string name="reports_error_generation">Could not generate the complete PDF. Inspection data is unchanged. Try again.</string>
+    <string name="reports_document_title">Property inspection report</string>
+    <string name="reports_name">Inspection: %1$s</string>
+    <string name="reports_address">Address: %1$s</string>
+    <string name="reports_date">Inspection date: %1$s</string>
+    <string name="reports_inspector">Inspector: %1$s</string>
+    <string name="reports_tenant">Role: tenant at move-in</string>
+    <string name="reports_landlord">Role: landlord after move-out</string>
+    <string name="reports_in_progress">Status: in progress</string>
+    <string name="reports_completed">Status: completed</string>
+    <string name="reports_summary">Summary</string>
+    <string name="reports_progress">Checked: %1$d / %2$d</string>
+    <string name="reports_unchecked">Unchecked: %1$d</string>
+    <string name="reports_problematic">Checks with issues: %1$d</string>
+    <string name="reports_issue_count">Individual issues: %1$d</string>
+    <string name="reports_rooms">Rooms: %1$d</string>
+    <string name="reports_empty_rooms">No rooms recorded.</string>
+    <string name="reports_empty_checks">No checks recorded in this room.</string>
+    <string name="reports_room">Room %1$d: %2$s</string>
+    <string name="reports_check">Check %1$s: %2$s</string>
+    <string name="reports_guidance">Guidance: %1$s</string>
+    <string name="reports_comment">General comment: %1$s</string>
+    <string name="reports_state_unchecked">State: unchecked</string>
+    <string name="reports_state_ok">State: OK</string>
+    <string name="reports_state_issue">State: has issue</string>
+    <string name="reports_state_na">State: not applicable</string>
+    <string name="reports_no_issues">No individual issue records.</string>
+    <string name="reports_issue">Issue %1$s</string>
+    <string name="reports_no_description">No description provided.</string>
+    <string name="reports_condition_photo">Condition photo %1$s</string>
+    <string name="reports_issue_photo">Issue photo %1$s</string>
+    <string name="reports_page">Page %1$d</string>
+    <string name="reports_caption">Caption: %1$s</string>
+    <string name="reports_neutral_note">This report records the observed condition. It does not assign responsibility or certify legal or technical compliance.</string>
+    <string name="reports_attribution">Generated with iText Community (AGPLv3). Noto Sans © 2018 The Noto Project Authors; SIL Open Font License 1.1.</string>
+</resources>

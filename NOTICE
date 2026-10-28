@@ -9,8 +9,7 @@ https://itextpdf.com/products/itext-community
 https://github.com/itext/itext-java
 The original iText notices and PDF producer metadata must be preserved.
 
-The Android PDF compatibility tests include the unmodified Noto Sans Regular
-font from the Noto project. Copyright 2018 The Noto Project Authors
-(github.com/googlei18n/noto-fonts). The font is licensed under the SIL Open Font
-License 1.1; the full notice accompanies it in
-app/src/androidTest/assets/fonts/OFL.txt.
+The application embeds the unmodified Noto Sans Regular font in PDF reports.
+Copyright 2018 The Noto Project Authors (github.com/googlei18n/noto-fonts).
+The font is licensed under the SIL Open Font License 1.1; its complete notice
+accompanies the application in app/src/main/assets/fonts/OFL.txt.

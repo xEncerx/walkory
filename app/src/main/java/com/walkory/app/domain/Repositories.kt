@@ -62,20 +62,3 @@ interface SettingsRepository {
     suspend fun reset(): DomainResult<Preferences>
 }
 
-/** One consistent, independently readable full-report input; authored text is not localized. */
-data class ReportRequest(
-    val inspection: Inspection,
-    val localeTag: String,
-    val photoQuality: PdfPhotoQuality,
-)
-
-data class GeneratedReport(val fileId: LocalFileId)
-
-interface ReportEngine {
-    /**
-     * Generate the complete report without mutating/completing the inspection. The implementation
-     * stages a consistent copy of owned photos coordinated with attachment deletion; subsequent
-     * edits affect only later requests. Output is private, not a public URI or claimed export.
-     */
-    suspend fun generate(request: ReportRequest): DomainResult<GeneratedReport>
-}

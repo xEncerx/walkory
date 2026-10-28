@@ -59,6 +59,7 @@ class PropertiesHistoryTest {
             val navigation = rememberInspectionsNavigation()
             val workflow = rememberInspectionWorkflowModel(fixture.inspections, fixture.templates)
             val history = rememberInspectionHistoryModel(fixture.inspections)
+            val reports = com.walkory.app.features.reports.rememberReportModel(fixture.reports, fixture.reportSettings)
             val photoFactory = remember { androidx.lifecycle.viewmodel.viewModelFactory {
                 initializer { PhotographViewModel(com.walkory.app.platform.images.PhotographMedia(fixture.context, fixture.inspections, fixture.files),
                     fixture.inspections, createSavedStateHandle()) }
@@ -73,7 +74,7 @@ class PropertiesHistoryTest {
                         PropertiesWorkspace(propertyModel, properties, inspections, wide, propertyNavigation, {},
                             { navigation.select(it, propertyNavigation.selectedId()); showInspections() }, { navigation.begin(creation, it); showInspections() })
                     }, inspectionsContent = { wide, showProperties -> InspectionsWorkspace(creation, inspections, wide, navigation, {}, workflow, photographs,
-                        history, properties, picker) { id ->
+                        history, properties, picker, reports) { id ->
                             propertyNavigation.root()
                             if ((properties as? CollectionState.Content)?.items?.any { it.id.value == id } == true) propertyNavigation.select(id)
                             showProperties()

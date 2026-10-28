@@ -17,6 +17,10 @@ import com.walkory.app.domain.TemplateRepository
 import com.walkory.app.platform.files.PrivateAttachmentFiles
 import com.walkory.app.platform.images.createLocalImageLoader
 import com.walkory.app.platform.images.PhotographMedia
+import com.walkory.app.data.local.RoomReportSnapshots
+import com.walkory.app.domain.ReportEngine
+import com.walkory.app.platform.pdf.ITextReportEngine
+import com.walkory.app.platform.pdf.ReportFiles
 import java.io.File
 
 class AppContainer(context: Context) {
@@ -32,5 +36,8 @@ class AppContainer(context: Context) {
     val properties: PropertyRepository = RoomPropertyRepository(database)
     val templates: TemplateRepository = CatalogTemplateRepository(RoomTemplateRepository(database), ResourceTemplateCatalog(applicationContext))
     val settings: SettingsRepository = DataStoreSettingsRepository(createPreferencesStore(applicationContext))
+    internal val reportFiles = ReportFiles(File(applicationContext.filesDir, "report-staging"), File(applicationContext.cacheDir, "reports"))
+    val reports: ReportEngine = ITextReportEngine(applicationContext,
+        RoomReportSnapshots(database, attachments, attachmentFiles, reportFiles), reportFiles)
     val imageLoader = createLocalImageLoader(applicationContext)
 }

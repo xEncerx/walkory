@@ -24,11 +24,16 @@ import com.walkory.app.app.CollectionState
 import com.walkory.app.features.objects.PropertiesViewModel
 import com.walkory.app.features.objects.PropertyPicker
 import kotlinx.serialization.Serializable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import com.walkory.app.features.reports.ReportViewModel
+import com.walkory.app.features.reports.ReportScreen
 
 @Serializable private data object ResultOverview : NavKey
 @Serializable private data class ResultRoom(val id: String, val editing: Boolean = false) : NavKey
 @Serializable private data class ResultCheck(val id: String, val issue: String? = null) : NavKey
 @Serializable private data class ResultSummary(val issues: Boolean) : NavKey
+@Serializable private data object ResultReport : NavKey
 
 @Composable
 internal fun rememberInspectionWorkflowModel(inspections: InspectionRepository, templates: TemplateRepository): InspectionWorkflowViewModel {
@@ -39,7 +44,8 @@ internal fun rememberInspectionWorkflowModel(inspections: InspectionRepository, 
 @Composable
 internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: InspectionId, onBack: () -> Unit,
     templates: InspectionCreationState, onRetryTemplates: () -> Unit, photographs: com.walkory.app.features.media.PhotographViewModel,
-    properties: CollectionState<PropertyCard>, propertyPicker: PropertiesViewModel, onRetryProperties: () -> Unit, history: InspectionHistoryViewModel) {
+    properties: CollectionState<PropertyCard>, propertyPicker: PropertiesViewModel, onRetryProperties: () -> Unit, history: InspectionHistoryViewModel,
+    reports: ReportViewModel, onNewInspection: (() -> Unit)?) {
     val state by model.state.collectAsStateWithLifecycle()
     val record = state.records[id]
     when {
@@ -52,16 +58,27 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
     var choosingProperty by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
     val stack = rememberNavBackStack(ResultOverview)
-    val back: () -> Unit = { if (stack.size > 1) stack.removeAt(stack.lastIndex) else onBack() }
+    val back: () -> Unit = {
+        if (stack.last() == ResultReport) reports.cancel(id)
+        if (stack.size > 1) stack.removeAt(stack.lastIndex) else onBack()
+    }
     BackHandler(onBack = back)
     val current = stack.last()
     val title = when (current) {
         is ResultRoom -> if (current.editing) stringResource(R.string.inspections_edit_list) else inspection.rooms.find { it.id.value == current.id }?.name.orEmpty()
         is ResultCheck -> inspection.rooms.asSequence().flatMap { it.checks }.find { it.id.value == current.id }?.title.orEmpty()
         is ResultSummary -> stringResource(if (current.issues) R.string.inspections_issues else R.string.inspections_check_unchecked)
+        ResultReport -> stringResource(R.string.reports_title)
         else -> inspection.details.name
     }
-    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), topBar = { WalkoryTopAppBar(title, back) }) { padding ->
+    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), topBar = { WalkoryTopAppBar(title, back) },
+        floatingActionButton = {
+            if (current != ResultReport && onNewInspection != null) {
+                FloatingActionButton(onNewInspection, Modifier.testTag("inspection_new")) {
+                    WalkoryIcon(Icons.Rounded.Add, description = stringResource(R.string.inspections_new))
+                }
+            }
+        }) { padding ->
         Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = WalkorySpacing.medium)) {
                 WalkorySaveStatus(record.saveStatus, { model.retry(id) })
@@ -83,6 +100,7 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                 entryProvider = entryProvider<NavKey> {
                     entry<ResultOverview> {
                         ResultOverviewScreen(record, model, { stack.add(ResultRoom(it.value)) }, { stack.add(ResultSummary(it)) }, templates, onRetryTemplates) {
+                            Button({ stack.add(ResultReport) }, Modifier.testTag("result_report")) { Text(stringResource(R.string.reports_title)) }
                             val linked = (properties as? CollectionState.Content)?.items?.find { it.id == inspection.propertyId }
                             OutlinedButton({ choosingProperty = true }, enabled = historyState.deletingId == null,
                                 modifier = Modifier.testTag("result_property")) {
@@ -110,6 +128,9 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                         val check = room?.checks?.find { it.id.value == route.id }
                         if (check != null) ResultCheckScreen(id, room, check, route.issue, model, photographs, back)
                         else ResultMissing(back)
+                    }
+                    entry<ResultReport> {
+                        ReportScreen(inspection, record.saveStatus != SaveStatus.SAVING && record.saveStatus != SaveStatus.ERROR, reports)
                     }
                     entry<ResultSummary> { route ->
                         ResultSummaryScreen(inspection, route.issues) { check, issue -> stack.add(ResultCheck(check.value, issue?.value)) }

@@ -43,12 +43,14 @@ class InspectionWorkflowTest {
         val history = InspectionHistoryViewModel(fixture.inspections, androidx.lifecycle.SavedStateHandle())
         val picker = com.walkory.app.features.objects.PropertiesViewModel(fixture.properties, androidx.lifecycle.SavedStateHandle())
         store.put("history", history); store.put("picker", picker)
+        val reports = com.walkory.app.features.reports.ReportViewModel(fixture.reports, fixture.reportSettings)
+        store.put("reports", reports)
         compose.setContent {
             keyboard = LocalSoftwareKeyboardController.current
             WalkoryTheme {
                 InspectionBrowser(CollectionState.Content(listOf(original)), original.id.value, expanded.value, {}, {}, InspectionDiscovery(), {}) {
                     InspectionWorkflow(model, original.id, {}, InspectionCreationState(loadingTemplates = false), {}, photographs,
-                        CollectionState.Content(emptyList()), picker, {}, history)
+                        CollectionState.Content(emptyList()), picker, {}, history, reports, if (expanded.value) ({}) else null)
                 }
             }
         }

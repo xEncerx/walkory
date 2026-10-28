@@ -30,7 +30,7 @@ class InspectionCreationTest {
     private lateinit var model: InspectionCreationViewModel
     private var keyboard: SoftwareKeyboardController? = null
     private fun text(id: Int) = fixture.context.getString(id)
-    private fun start(): StateRestorationTester {
+    private fun start(expanded: Boolean = false): StateRestorationTester {
         model = InspectionCreationViewModel(fixture.inspections,
             CatalogTemplateRepository(fixture.templates, ResourceTemplateCatalog(fixture.context)), SavedStateHandle())
         store.put("creation", model)
@@ -42,6 +42,8 @@ class InspectionCreationTest {
         val history = InspectionHistoryViewModel(fixture.inspections, SavedStateHandle())
         val picker = com.walkory.app.features.objects.PropertiesViewModel(fixture.properties, SavedStateHandle())
         store.put("history", history); store.put("picker", picker)
+        val reports = com.walkory.app.features.reports.ReportViewModel(fixture.reports, fixture.reportSettings)
+        store.put("reports", reports)
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
             val records by fixture.inspections.observeAll().collectAsState(initial = DomainResult.Success(emptyList()))
@@ -50,8 +52,8 @@ class InspectionCreationTest {
                 is DomainResult.Success -> CollectionState.Content(value.value)
                 is DomainResult.Failure -> CollectionState.Error
             }
-            WalkoryTheme { InspectionsWorkspace(model, collection, false, rememberInspectionsNavigation(), {}, workflow, photographs,
-                history, CollectionState.Content(emptyList()), picker, {}) }
+            WalkoryTheme { InspectionsWorkspace(model, collection, expanded, rememberInspectionsNavigation(), {}, workflow, photographs,
+                history, CollectionState.Content(emptyList()), picker, reports, {}) }
         }
         return restoration
     }
@@ -63,6 +65,19 @@ class InspectionCreationTest {
 
     @Test fun tenantCreationCopiesRepeatedRoomsAndReopensDurableOverview() = createAndReopen(InspectionRole.TENANT)
     @Test fun landlordCreationCopiesRepeatedRoomsAndReopensDurableOverview() = createAndReopen(InspectionRole.LANDLORD)
+
+    @Test fun wideReportPreparationDoesNotHaveAnOverlappingNewInspectionAction() {
+        val inspection = InspectionOperations().create("Wide rental inspection", "Sample Street 9", InspectionRole.TENANT).accepted()
+        runBlocking { fixture.inspections.create(inspection).accepted() }
+        start(expanded = true)
+        compose.waitUntil(10_000) { compose.onAllNodesWithText(inspection.details.name).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText(inspection.details.name).performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("inspection_overview").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("inspection_overview").performScrollToNode(hasTestTag("result_report"))
+        click("result_report")
+        compose.onNodeWithTag("report_generate").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("inspection_new").assertDoesNotExist()
+    }
 
     private fun createAndReopen(role: InspectionRole) {
         val source = ChecklistTemplate(TemplateId.new(), "Authored kitchen", TemplateOrigin.Custom,

@@ -26,10 +26,28 @@ internal class PersistenceFixture : AutoCloseable {
         private set
     lateinit var templates: RoomTemplateRepository
         private set
+    val reportFiles = com.walkory.app.platform.pdf.ReportFiles(File(directory, "staging"), File(directory, "reports"))
+    lateinit var reportSnapshots: RoomReportSnapshots
+        private set
+    lateinit var reports: com.walkory.app.platform.pdf.ITextReportEngine
+        private set
+    val reportSettings = object : SettingsRepository {
+        private val value = kotlinx.coroutines.flow.MutableStateFlow<DomainResult<Preferences>>(DomainResult.Success(Preferences()))
+        override fun observe() = value
+        override suspend fun update(transform: (Preferences) -> Preferences): DomainResult<Preferences> {
+            val next = DomainResult.Success(transform(value.value.accepted()))
+            value.value = next
+            return next
+        }
+        override suspend fun reset() = update { Preferences() }
+    }
     init { bind() }
 
     private fun bind() {
-        inspections = RoomInspectionRepository(database, AttachmentStorageCoordinator(database.records(), files))
+        val coordinator = AttachmentStorageCoordinator(database.records(), files)
+        inspections = RoomInspectionRepository(database, coordinator)
+        reportSnapshots = RoomReportSnapshots(database, coordinator, files, reportFiles)
+        reports = com.walkory.app.platform.pdf.ITextReportEngine(context, reportSnapshots, reportFiles)
         properties = RoomPropertyRepository(database)
         templates = RoomTemplateRepository(database)
     }

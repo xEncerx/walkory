@@ -102,6 +102,7 @@ internal fun WalkoryApp() {
     } }
     val photographs: PhotographViewModel = viewModel(factory = photoFactory)
     val settings = rememberSettingsModel(application.container.settings)
+    val reports = com.walkory.app.features.reports.rememberReportModel(application.container.reports, application.container.settings)
     val settingsState by settings.state.collectAsStateWithLifecycle()
     val preferences = settingsState.preferences
     val platformLocales = AppCompatDelegate.getApplicationLocales().toLanguageTags()
@@ -161,7 +162,7 @@ internal fun WalkoryApp() {
                     { inspectionNavigation.begin(creation, it); showInspections() })
             },
             inspectionsContent = { expanded, showProperties -> InspectionsWorkspace(creation, state.inspections, expanded, inspectionNavigation, model::retry,
-                workflow, photographs, history, state.objects, propertyPicker) { id ->
+                workflow, photographs, history, state.objects, propertyPicker, reports) { id ->
                     propertyNavigation.root()
                     if ((state.objects as? CollectionState.Content)?.items?.any { it.id.value == id } == true) propertyNavigation.select(id)
                     showProperties()
