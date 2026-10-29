@@ -16,23 +16,29 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.createSavedStateHandle
+import com.walkory.app.platform.pdf.ReportDelivery
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.walkory.app.R
 import com.walkory.app.domain.*
 import com.walkory.app.ui_kit.*
 
 @Composable
-internal fun rememberReportModel(engine: ReportEngine, settings: SettingsRepository): ReportViewModel {
-    val factory = remember(engine, settings) { viewModelFactory { initializer { ReportViewModel(engine, settings) } } }
+internal fun rememberReportModel(engine: ReportEngine, settings: SettingsRepository, delivery: ReportDelivery): ReportViewModel {
+    val factory = remember(engine, settings, delivery) { viewModelFactory { initializer { ReportViewModel(engine, settings, delivery, createSavedStateHandle()) } } }
     return viewModel(factory = factory)
 }
 
 @Composable
-internal fun ReportScreen(inspection: Inspection, saved: Boolean, model: ReportViewModel) {
+internal fun ReportScreen(inspection: Inspection, saved: Boolean, model: ReportViewModel, onBack: () -> Unit) {
     val states by model.state.collectAsStateWithLifecycle()
     val state = states[inspection.id] ?: ReportState()
     val locale = LocalConfiguration.current.locales[0].toLanguageTag()
     val unchecked = remember(inspection) { inspection.progress().uncheckedChecks }
+    if (state.report != null && !state.running) {
+        ReportDeliveryScreen(inspection, saved, state, model, locale, onBack)
+        return
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(WalkorySpacing.medium).testTag("report_setup"),
         verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
         Text(inspection.details.name, style = MaterialTheme.typography.titleLarge)
@@ -54,13 +60,7 @@ internal fun ReportScreen(inspection: Inspection, saved: Boolean, model: ReportV
                     ReportProgress.Finalizing -> { Text(stringResource(R.string.reports_finalizing)); LinearProgressIndicator(Modifier.fillMaxWidth()) }
                 }
             } else if (state.cancelled) Text(stringResource(R.string.reports_cancelled))
-            else if (state.error != null) Text(stringResource(when (state.error) {
-                DomainError.InvalidImage -> R.string.reports_error_photo
-                DomainError.InsufficientStorage -> R.string.reports_error_full
-                DomainError.StorageUnavailable -> R.string.reports_error_storage
-                is DomainError.NotFound -> R.string.reports_error_missing
-                else -> R.string.reports_error_generation
-            }), color = MaterialTheme.colorScheme.error)
+            else if (state.error != null) Text(stringResource(reportErrorLabel(state.error)), color = MaterialTheme.colorScheme.error)
             else state.report?.let { Text(pluralStringResource(R.plurals.reports_ready, it.pageCount, it.pageCount), Modifier.testTag("report_ready")) }
         }
         if (state.running) OutlinedButton({ model.cancel(inspection.id) }, Modifier.testTag("report_cancel")) { Text(stringResource(R.string.reports_cancel)) }
@@ -68,4 +68,12 @@ internal fun ReportScreen(inspection: Inspection, saved: Boolean, model: ReportV
             Text(stringResource(if (state.report == null) R.string.reports_generate else R.string.reports_regenerate))
         }
     }
+}
+
+internal fun reportErrorLabel(error: DomainError): Int = when (error) {
+    DomainError.InvalidImage -> R.string.reports_error_photo
+    DomainError.InsufficientStorage -> R.string.reports_error_full
+    DomainError.StorageUnavailable -> R.string.reports_error_storage
+    is DomainError.NotFound -> R.string.reports_error_missing
+    else -> R.string.reports_error_generation
 }

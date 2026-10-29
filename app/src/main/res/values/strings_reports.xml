@@ -54,4 +54,21 @@
     <string name="reports_caption">Caption: %1$s</string>
     <string name="reports_neutral_note">This report records the observed condition. It does not assign responsibility or certify legal or technical compliance.</string>
     <string name="reports_attribution">Generated with iText Community (AGPLv3). Noto Sans © 2018 The Noto Project Authors; SIL Open Font License 1.1.</string>
+    <string name="reports_previous">Previous page</string>
+    <string name="reports_next">Next page</string>
+    <string name="reports_position">Page %1$d of %2$d</string>
+    <string name="reports_zoom">Zoom in</string>
+    <string name="reports_fit">Fit page</string>
+    <string name="reports_preview_error">Cannot preview this PDF. Retry or generate it again. Saving and sharing remain available.</string>
+    <string name="reports_retry">Retry preview</string>
+    <string name="reports_save">Save PDF</string>
+    <string name="reports_share">Share PDF</string>
+    <string name="reports_return">Return to inspection</string>
+    <string name="reports_saving">Saving PDF…</string>
+    <string name="reports_saved">PDF saved. The inspection status is unchanged.</string>
+    <string name="reports_save_cancelled">Saving cancelled. The inspection and generated PDF are unchanged.</string>
+    <string name="reports_share_opened">Share menu opened. Choose an app to continue; delivery is not confirmed.</string>
+    <string name="reports_save_full">Not enough storage. Free space or choose another destination and retry saving.</string>
+    <string name="reports_artifact_missing">The PDF or selected destination is unavailable. Generate again or choose another destination. Inspection data is unchanged.</string>
+    <string name="reports_delivery_error">Could not save or share the PDF. Retry saving to another destination or sharing. Inspection data and earlier exports are unchanged.</string>
 </resources>

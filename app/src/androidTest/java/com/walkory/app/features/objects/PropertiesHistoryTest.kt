@@ -59,7 +59,8 @@ class PropertiesHistoryTest {
             val navigation = rememberInspectionsNavigation()
             val workflow = rememberInspectionWorkflowModel(fixture.inspections, fixture.templates)
             val history = rememberInspectionHistoryModel(fixture.inspections)
-            val reports = com.walkory.app.features.reports.rememberReportModel(fixture.reports, fixture.reportSettings)
+            val reports = com.walkory.app.features.reports.rememberReportModel(fixture.reports, fixture.reportSettings,
+                remember { com.walkory.app.platform.pdf.AndroidReportDelivery(fixture.context, fixture.reportFiles) })
             val photoFactory = remember { androidx.lifecycle.viewmodel.viewModelFactory {
                 initializer { PhotographViewModel(com.walkory.app.platform.images.PhotographMedia(fixture.context, fixture.inspections, fixture.files),
                     fixture.inspections, createSavedStateHandle()) }

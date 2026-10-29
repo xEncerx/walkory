@@ -31,6 +31,15 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/media_paths" />
         </provider>
+        <provider
+            android:name=".platform.pdf.ReadOnlyReportProvider"
+            android:authorities="${applicationId}.reports"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/report_paths" />
+        </provider>
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"

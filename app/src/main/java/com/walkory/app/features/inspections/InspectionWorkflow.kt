@@ -130,7 +130,7 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                         else ResultMissing(back)
                     }
                     entry<ResultReport> {
-                        ReportScreen(inspection, record.saveStatus != SaveStatus.SAVING && record.saveStatus != SaveStatus.ERROR, reports)
+                        ReportScreen(inspection, record.saveStatus != SaveStatus.SAVING && record.saveStatus != SaveStatus.ERROR, reports, back)
                     }
                     entry<ResultSummary> { route ->
                         ResultSummaryScreen(inspection, route.issues) { check, issue -> stack.add(ResultCheck(check.value, issue?.value)) }

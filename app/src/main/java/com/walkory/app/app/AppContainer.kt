@@ -39,5 +39,6 @@ class AppContainer(context: Context) {
     internal val reportFiles = ReportFiles(File(applicationContext.filesDir, "report-staging"), File(applicationContext.cacheDir, "reports"))
     val reports: ReportEngine = ITextReportEngine(applicationContext,
         RoomReportSnapshots(database, attachments, attachmentFiles, reportFiles), reportFiles)
+    internal val reportDelivery = com.walkory.app.platform.pdf.AndroidReportDelivery(applicationContext, reportFiles)
     val imageLoader = createLocalImageLoader(applicationContext)
 }

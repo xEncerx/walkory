@@ -102,7 +102,8 @@ internal fun WalkoryApp() {
     } }
     val photographs: PhotographViewModel = viewModel(factory = photoFactory)
     val settings = rememberSettingsModel(application.container.settings)
-    val reports = com.walkory.app.features.reports.rememberReportModel(application.container.reports, application.container.settings)
+    val reports = com.walkory.app.features.reports.rememberReportModel(application.container.reports, application.container.settings, application.container.reportDelivery)
+    com.walkory.app.features.reports.ReportHost(reports)
     val settingsState by settings.state.collectAsStateWithLifecycle()
     val preferences = settingsState.preferences
     val platformLocales = AppCompatDelegate.getApplicationLocales().toLanguageTags()

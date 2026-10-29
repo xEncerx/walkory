@@ -43,7 +43,8 @@ class InspectionWorkflowTest {
         val history = InspectionHistoryViewModel(fixture.inspections, androidx.lifecycle.SavedStateHandle())
         val picker = com.walkory.app.features.objects.PropertiesViewModel(fixture.properties, androidx.lifecycle.SavedStateHandle())
         store.put("history", history); store.put("picker", picker)
-        val reports = com.walkory.app.features.reports.ReportViewModel(fixture.reports, fixture.reportSettings)
+        val reports = com.walkory.app.features.reports.ReportViewModel(fixture.reports, fixture.reportSettings,
+            com.walkory.app.platform.pdf.AndroidReportDelivery(fixture.context, fixture.reportFiles), androidx.lifecycle.SavedStateHandle())
         store.put("reports", reports)
         compose.setContent {
             keyboard = LocalSoftwareKeyboardController.current

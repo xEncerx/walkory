@@ -42,7 +42,8 @@ class InspectionCreationTest {
         val history = InspectionHistoryViewModel(fixture.inspections, SavedStateHandle())
         val picker = com.walkory.app.features.objects.PropertiesViewModel(fixture.properties, SavedStateHandle())
         store.put("history", history); store.put("picker", picker)
-        val reports = com.walkory.app.features.reports.ReportViewModel(fixture.reports, fixture.reportSettings)
+        val reports = com.walkory.app.features.reports.ReportViewModel(fixture.reports, fixture.reportSettings,
+            com.walkory.app.platform.pdf.AndroidReportDelivery(fixture.context, fixture.reportFiles), SavedStateHandle())
         store.put("reports", reports)
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
