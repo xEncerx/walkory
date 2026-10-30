@@ -50,6 +50,7 @@ internal class TemplatesNavigationState(
     val roles: MutableState<List<InspectionRole>>,
     val deleteId: MutableState<String?>,
     val returningToCatalog: MutableState<Boolean>,
+    val query: MutableState<String>,
 ) {
     fun returnToCatalog(model: TemplatesViewModel) {
         if (backStack.last() is TemplateEditorRoute) {
@@ -71,10 +72,11 @@ internal class TemplatesNavigationState(
 internal fun rememberTemplatesNavigation(): TemplatesNavigationState {
     val stack = rememberNavBackStack(TemplateCatalogRoute)
     val filter = rememberSaveable { mutableStateOf(TemplateFilter.ALL) }
-    val roles = rememberSaveable { mutableStateOf(emptyList<InspectionRole>()) }
+    val roles = rememberSaveable { mutableStateOf(InspectionRole.entries.toList()) }
     val deletion = rememberSaveable { mutableStateOf<String?>(null) }
     val returning = rememberSaveable { mutableStateOf(false) }
-    return remember(stack, filter, roles, deletion, returning) { TemplatesNavigationState(stack, filter, roles, deletion, returning) }
+    val query = rememberSaveable { mutableStateOf("") }
+    return remember(stack, filter, roles, deletion, returning, query) { TemplatesNavigationState(stack, filter, roles, deletion, returning, query) }
 }
 
 @Composable
@@ -160,11 +162,11 @@ internal fun TemplatesWorkspace(model: TemplatesViewModel, expanded: Boolean, na
             entryProvider = entryProvider<NavKey> {
                 entry<TemplateCatalogRoute> {
                     TemplatesBrowser(state, null, expanded, filter, roles, { filter = it }, toggleRole, select, edit, createCopy,
-                        { deleteId = it.id.value }, model::retry)
+                        { deleteId = it.id.value }, model::retry, navigation.query.value, { navigation.query.value = it })
                 }
                 entry<TemplateDetailRoute> { route ->
                     TemplatesBrowser(state, route.id, expanded, filter, roles, { filter = it }, toggleRole, select, edit, createCopy,
-                        { deleteId = it.id.value }, model::retry)
+                        { deleteId = it.id.value }, model::retry, navigation.query.value, { navigation.query.value = it })
                 }
                 entry<TemplateEditorRoute> { route ->
                     if (state.draft?.id == route.id) TemplateEditor(

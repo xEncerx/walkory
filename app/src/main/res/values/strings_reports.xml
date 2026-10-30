@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="reports_title">Full PDF report</string>
+    <string name="reports_title">Create report</string>
     <string name="reports_generate">Generate PDF</string>
-    <string name="reports_regenerate">Generate again</string>
     <string name="reports_contents">All checks and states, comments, individual issues, condition and issue photographs with captions.</string>
     <string name="reports_unchecked_notice">Unchecked points will be explicitly identified in the report.</string>
     <string name="reports_wait_saved">Wait until all changes are saved before generating the report.</string>
@@ -11,10 +10,6 @@
     <string name="reports_finalizing">Finishing PDF…</string>
     <string name="reports_cancel">Cancel generation</string>
     <string name="reports_cancelled">Generation cancelled. Inspection data is unchanged.</string>
-    <plurals name="reports_ready">
-        <item quantity="one">PDF generated: %1$d page. Inspection data is unchanged.</item>
-        <item quantity="other">PDF generated: %1$d pages. Inspection data is unchanged.</item>
-    </plurals>
     <string name="reports_error_storage">Cannot write the PDF. Check available device storage and try again. Inspection data is unchanged.</string>
     <string name="reports_error_full">Not enough storage to generate the report. Free space and try again.</string>
     <string name="reports_error_photo">A required photograph cannot be read. Check the inspection photographs and try again; no incomplete PDF was created.</string>
@@ -50,24 +45,16 @@
     <string name="reports_no_description">No description provided.</string>
     <string name="reports_condition_photo">Condition photo %1$s</string>
     <string name="reports_issue_photo">Issue photo %1$s</string>
-    <string name="reports_page">Page %1$d</string>
     <string name="reports_caption">Caption: %1$s</string>
-    <string name="reports_neutral_note">This report records the observed condition. It does not assign responsibility or certify legal or technical compliance.</string>
     <string name="reports_attribution">Generated with iText Community (AGPLv3). Noto Sans © 2018 The Noto Project Authors; SIL Open Font License 1.1.</string>
-    <string name="reports_previous">Previous page</string>
-    <string name="reports_next">Next page</string>
     <string name="reports_position">Page %1$d of %2$d</string>
-    <string name="reports_zoom">Zoom in</string>
-    <string name="reports_fit">Fit page</string>
-    <string name="reports_preview_error">Cannot preview this PDF. Retry or generate it again. Saving and sharing remain available.</string>
+    <string name="reports_preview_error">Cannot preview this page. Try again. Saving and sharing remain available.</string>
     <string name="reports_retry">Retry preview</string>
     <string name="reports_save">Save PDF</string>
     <string name="reports_share">Share PDF</string>
-    <string name="reports_return">Return to inspection</string>
     <string name="reports_saving">Saving PDF…</string>
     <string name="reports_saved">PDF saved. The inspection status is unchanged.</string>
     <string name="reports_save_cancelled">Saving cancelled. The inspection and generated PDF are unchanged.</string>
-    <string name="reports_share_opened">Share menu opened. Choose an app to continue; delivery is not confirmed.</string>
     <string name="reports_save_full">Not enough storage. Free space or choose another destination and retry saving.</string>
     <string name="reports_artifact_missing">The PDF or selected destination is unavailable. Generate again or choose another destination. Inspection data is unchanged.</string>
     <string name="reports_delivery_error">Could not save or share the PDF. Retry saving to another destination or sharing. Inspection data and earlier exports are unchanged.</string>

@@ -33,7 +33,7 @@ private fun FoundationConfirmationPreview() {
     WalkoryTheme {
         WalkoryConfirmation(
             title = stringResource(R.string.common_cancel),
-            message = stringResource(R.string.common_local_data_body),
+            message = stringResource(R.string.settings_report_data_body),
             confirmLabel = stringResource(R.string.common_cancel),
             onConfirm = {}, onDismiss = {},
         )

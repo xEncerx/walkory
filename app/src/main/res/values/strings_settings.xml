@@ -2,7 +2,7 @@
 <resources>
     <string name="settings_title">Settings</string>
     <string name="settings_about">About Walkory</string>
-    <string name="settings_about_body">Rental property inspections, stored locally.</string>
+    <string name="settings_about_body">Walkory is an <annotation github="source">open-source</annotation> app for recording property condition at move-in and move-out. Check rooms, add issues and photographs, and create a PDF report.</string>
     <string name="settings_language">App language</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_accent">Color palette</string>
@@ -24,9 +24,6 @@
     <string name="settings_amber">Amber</string>
     <string name="settings_monochrome">Monochrome</string>
     <string name="settings_dynamic_colors">Android wallpaper colors</string>
-    <string name="settings_dynamic_note">Available on Android 12 and later. The selected palette is kept as a fallback.</string>
-    <string name="settings_dynamic_fallback">Wallpaper colors require Android 12. This device uses the selected palette instead.</string>
-    <string name="settings_accent_preview">Accent preview</string>
     <string name="settings_percent">%1$d%%</string>
     <string name="settings_scale_note">App scale is combined with the system font size.</string>
     <string name="settings_contrast">Higher contrast</string>
@@ -36,9 +33,12 @@
     <string name="settings_high">High</string>
     <string name="settings_pdf_note">Only affects photographs in generated PDFs. Original photographs and captions are kept unchanged.</string>
     <string name="settings_inspector_note">Optional free text for new inspections only. Existing inspections and drafts are not changed. You can edit or clear it in each inspection.</string>
-    <string name="settings_language_note">Only interface labels and date formatting change. Authored and copied text stays in its original language.</string>
     <string name="settings_apply">Apply</string>
     <string name="settings_reset">Reset preferences</string>
     <string name="settings_reset_title">Reset preferences?</string>
     <string name="settings_reset_body">Language, theme, colors, accessibility, PDF quality and default inspector return to defaults. Inspections, property cards, templates and photographs are kept.</string>
+    <string name="settings_workflow_body">Choose your role and enter the property details. Add rooms, select a checklist template or create your own checks. Mark each condition and attach comments, issues and photographs where needed.</string>
+    <string name="settings_report_data">Report and data</string>
+    <string name="settings_report_data_body">Create a PDF at any point, then save or share it. Inspections and photographs are stored on this device.</string>
+    <string name="settings_browser_missing">No browser is available to open this link.</string>
 </resources>

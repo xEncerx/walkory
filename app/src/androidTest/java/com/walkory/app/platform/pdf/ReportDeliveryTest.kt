@@ -31,7 +31,7 @@ class ReportDeliveryTest {
     private val fixture = PersistenceFixture()
     private val output = File(fixture.context.cacheDir, "reports/delivery-test-${UUID.randomUUID()}")
     private val files = ReportFiles(File(fixture.directory, "delivery-staging"), output)
-    private val engine = ITextReportEngine(fixture.context, fixture.reportSnapshots, files)
+    private val engine = ITextReportEngine(fixture.context, fixture.reportSnapshots, files, fixture.inspections)
     private val delivery = AndroidReportDelivery(fixture.context, files)
     @After fun close() { output.deleteRecursively(); fixture.close() }
 

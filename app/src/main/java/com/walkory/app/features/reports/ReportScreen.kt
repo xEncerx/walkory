@@ -5,9 +5,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -30,24 +30,24 @@ internal fun rememberReportModel(engine: ReportEngine, settings: SettingsReposit
 }
 
 @Composable
-internal fun ReportScreen(inspection: Inspection, saved: Boolean, model: ReportViewModel, onBack: () -> Unit) {
+internal fun ReportScreen(inspection: Inspection, saved: Boolean, model: ReportViewModel) {
     val states by model.state.collectAsStateWithLifecycle()
     val state = states[inspection.id] ?: ReportState()
     val locale = LocalConfiguration.current.locales[0].toLanguageTag()
-    val unchecked = remember(inspection) { inspection.progress().uncheckedChecks }
-    if (state.report != null && !state.running) {
-        ReportDeliveryScreen(inspection, saved, state, model, locale, onBack)
+    var requested by rememberSaveable(inspection.id.value, locale) { mutableStateOf(false) }
+    val previewState = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+    val canGenerate = saved && state.delivery != DeliveryStatus.CHOOSING && state.delivery != DeliveryStatus.SAVING
+    LaunchedEffect(inspection, canGenerate, locale) {
+        if (canGenerate) { model.generate(inspection.id, locale); requested = true }
+    }
+    if (requested && saved && state.report != null && !state.running && state.error == null && !state.cancelled) {
+        previewState.SaveableStateProvider(state.report.fileId.value) {
+            ReportDeliveryScreen(inspection, state, model)
+        }
         return
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(WalkorySpacing.medium).testTag("report_setup"),
         verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
-        Text(inspection.details.name, style = MaterialTheme.typography.titleLarge)
-        Text(inspection.details.property.address)
-        Text(stringResource(R.string.reports_date, inspection.details.date.format(
-            java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG).withLocale(java.util.Locale.forLanguageTag(locale)))))
-        inspection.details.inspector?.takeIf { it.isNotBlank() }?.let { Text(stringResource(R.string.reports_inspector, it)) }
-        Text(stringResource(R.string.reports_contents))
-        if (unchecked > 0) Text(stringResource(R.string.reports_unchecked_notice))
         if (!saved) Text(stringResource(R.string.reports_wait_saved))
         Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
             if (state.running) {
@@ -61,11 +61,12 @@ internal fun ReportScreen(inspection: Inspection, saved: Boolean, model: ReportV
                 }
             } else if (state.cancelled) Text(stringResource(R.string.reports_cancelled))
             else if (state.error != null) Text(stringResource(reportErrorLabel(state.error)), color = MaterialTheme.colorScheme.error)
-            else state.report?.let { Text(pluralStringResource(R.plurals.reports_ready, it.pageCount, it.pageCount), Modifier.testTag("report_ready")) }
+            else if (!requested) LinearProgressIndicator(Modifier.fillMaxWidth())
         }
         if (state.running) OutlinedButton({ model.cancel(inspection.id) }, Modifier.testTag("report_cancel")) { Text(stringResource(R.string.reports_cancel)) }
-        else Button({ model.generate(inspection.id, locale) }, Modifier.testTag("report_generate"), enabled = saved) {
-            Text(stringResource(if (state.report == null) R.string.reports_generate else R.string.reports_regenerate))
+        else if (state.error != null || state.cancelled) Button({ model.generate(inspection.id, locale) },
+            Modifier.testTag("report_generate"), enabled = saved) {
+            Text(stringResource(R.string.common_retry))
         }
     }
 }

@@ -44,4 +44,7 @@
     <string name="templates_no_matches">Нет шаблонов с таким фильтром</string>
     <string name="templates_no_matches_body">Выберите другой фильтр, создайте шаблон или скопируйте встроенный.</string>
     <string name="templates_custom_summary">%1$s · собственный</string>
+    <string name="templates_search">Поиск по названию</string>
+    <string name="templates_source">Шаблоны</string>
+    <string name="templates_add_quick">+ Пункт</string>
 </resources>

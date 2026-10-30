@@ -39,7 +39,7 @@ private object Keys {
 }
 
 private fun decode(stored: StoredPreferences): Preferences = try {
-    val defaults = Preferences()
+    val defaults = Preferences(dynamicColors = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S)
     Preferences(
         stored.enum(Keys.language, defaults.language), stored.enum(Keys.theme, defaults.theme),
         stored.enum(Keys.accent, defaults.accent), stored[Keys.dynamicColors] ?: defaults.dynamicColors,

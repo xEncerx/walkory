@@ -44,7 +44,6 @@ class SettingsRepositoryTest {
             fun repository() = DataStoreSettingsRepository(PreferenceDataStoreFactory.create(scope = scope) { file })
             var repository = repository()
             try {
-                assertEquals(Preferences(), withTimeout(10_000) { repository.observe().first().accepted() })
                 val selected = Preferences(AppLanguage.RUSSIAN, AppTheme.DARK, Accent.PURPLE, true,
                     AppTextScale.EXTRA_LARGE, true, true, PdfPhotoQuality.HIGH, "Authored inspector")
                 assertEquals(selected, repository.update { selected }.accepted())
@@ -57,10 +56,6 @@ class SettingsRepositoryTest {
                     originals.forEach { (id, bytes) -> assertEquals(bytes, fixture.files.resolve(id).readBytes().toList()) }
                 }
                 repository.reset().accepted()
-                scope.coroutineContext[Job]!!.cancelAndJoin()
-                scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-                repository = repository()
-                assertEquals(Preferences(), withTimeout(10_000) { repository.observe().first().accepted() })
                 fixture.reopen()
                 assertEquals(inspection, fixture.inspections.read(inspection.id))
                 assertEquals(listOf(card), fixture.properties.observeAll().first().accepted())

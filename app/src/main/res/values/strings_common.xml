@@ -16,10 +16,4 @@
     <string name="common_missing_title">Item no longer available</string>
     <string name="common_missing_body">It may have been removed. Go back to the list.</string>
     <string name="common_help">How it works</string>
-    <string name="common_help_intro">Keep a record of the property condition</string>
-    <string name="common_help_role">Choose a role for each inspection: tenant at move-in or landlord after move-out.</string>
-    <string name="common_help_rooms">Prepare rooms using one checklist template or your own list. Copied text belongs to the inspection.</string>
-    <string name="common_help_results">Record conditions, individual issues and photographs. A full PDF includes unchecked items too.</string>
-    <string name="common_local_data">Data on this device</string>
-    <string name="common_local_data_body">Records stay on this device, without accounts, cloud sync or backups. Only a PDF you choose to save or share leaves the app.</string>
 </resources>

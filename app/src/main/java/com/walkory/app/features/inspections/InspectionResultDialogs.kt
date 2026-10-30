@@ -19,16 +19,16 @@ internal fun ResultTextDialog(title: Int, initial: String, initialGuidance: Stri
     var value by rememberSaveable { mutableStateOf(initial) }
     var guidance by rememberSaveable { mutableStateOf(initialGuidance.orEmpty()) }
     var validation by rememberSaveable { mutableStateOf(false) }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text(stringResource(title)) }, text = {
+    AlertDialog(modifier = Modifier.dismissKeyboardOnOutsideTap(), onDismissRequest = onDismiss, title = { Text(stringResource(title)) }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
-            OutlinedTextField(value, { value = it }, label = { Text(stringResource(when {
+            WalkoryTextField(value, { value = it }, label = { Text(stringResource(when {
                 issue -> R.string.inspections_issue_description
                 title == R.string.inspections_rename_room -> R.string.inspections_room_name
                 else -> R.string.templates_item_title
             })) },
                 isError = validation && required && value.isBlank(), modifier = Modifier.fillMaxWidth().testTag("result_edit_text"))
             if (validation && required && value.isBlank()) Text(stringResource(if (issue) R.string.inspections_empty_issue else R.string.common_required_field), color = MaterialTheme.colorScheme.error)
-            if (initialGuidance != null) OutlinedTextField(guidance, { guidance = it }, label = { Text(stringResource(R.string.templates_guidance)) },
+            if (initialGuidance != null) WalkoryTextField(guidance, { guidance = it }, label = { Text(stringResource(R.string.templates_guidance)) },
                 modifier = Modifier.fillMaxWidth().testTag("result_edit_guidance"))
         }
     }, confirmButton = { TextButton({ validation = true; if ((!required || value.isNotBlank()) && onSave(value, guidance)) onDismiss() }, Modifier.testTag("result_edit_save")) {
@@ -41,10 +41,10 @@ internal fun ResultTemplateDialog(record: InspectionResultState, room: Inspectio
     var name by rememberSaveable { mutableStateOf(room.name) }
     var validation by rememberSaveable { mutableStateOf(false) }
     val saving = record.templateStatus == SaveStatus.SAVING
-    AlertDialog(onDismissRequest = { if (!saving) onDismiss() }, title = { Text(stringResource(R.string.inspections_save_template)) }, text = {
+    AlertDialog(modifier = Modifier.dismissKeyboardOnOutsideTap(), onDismissRequest = { if (!saving) onDismiss() }, title = { Text(stringResource(R.string.inspections_save_template)) }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
             Text(stringResource(R.string.inspections_template_content_only))
-            OutlinedTextField(name, { name = it }, enabled = !saving && record.templateStatus != SaveStatus.SAVED,
+            WalkoryTextField(name, { name = it }, enabled = !saving && record.templateStatus != SaveStatus.SAVED,
                 label = { Text(stringResource(R.string.templates_name)) }, isError = validation && name.isBlank(), modifier = Modifier.fillMaxWidth().testTag("result_template_name"))
             if (validation && name.isBlank()) Text(stringResource(R.string.common_required_field), color = MaterialTheme.colorScheme.error)
             WalkorySaveStatus(record.templateStatus, { model.saveTemplate(record.inspection.id, room.id, name) })
@@ -58,25 +58,21 @@ internal fun ResultTemplateDialog(record: InspectionResultState, room: Inspectio
 @Composable
 internal fun AddResultRoomDialog(inspection: Inspection, templates: InspectionCreationState, onRetry: () -> Unit,
     onAdd: (RoomType, String, ChecklistTemplate?) -> Unit, onDismiss: () -> Unit) {
-    var type by rememberSaveable { mutableStateOf(RoomType.KITCHEN) }
-    var name by rememberSaveable { mutableStateOf<String?>(null) }
+    var type by rememberSaveable { mutableStateOf(RoomType.CUSTOM) }
+    var name by rememberSaveable { mutableStateOf("") }
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     var typeMenu by remember { mutableStateOf(false) }
     var templateMenu by remember { mutableStateOf(false) }
     var validation by rememberSaveable { mutableStateOf(false) }
-    val actualName = name ?: stringResource(type.roomLabel())
     val available = templates.templates.filter { (it.origin as? TemplateOrigin.BuiltIn)?.role?.let { role -> role == inspection.details.role } != false }
         .sortedBy { (it.origin as? TemplateOrigin.BuiltIn)?.roomType != type }
     val template = available.find { it.id.value == selected }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text(stringResource(R.string.inspections_add_room)) }, text = {
+    AlertDialog(modifier = Modifier.dismissKeyboardOnOutsideTap(), onDismissRequest = onDismiss, title = { Text(stringResource(R.string.inspections_add_room)) }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
-            Box {
-                OutlinedButton({ typeMenu = true }, Modifier.testTag("result_room_type")) { Text(stringResource(type.roomLabel())) }
-                DropdownMenu(typeMenu, { typeMenu = false }) { RoomType.entries.forEach { option ->
-                    DropdownMenuItem({ Text(stringResource(option.roomLabel())) }, { type = option; typeMenu = false })
-                } }
+            OutlinedButton({ typeMenu = true }, Modifier.testTag("result_room_type")) {
+                Text(stringResource(R.string.inspections_ready_rooms))
             }
-            WalkoryRequiredField(actualName, { name = it }, stringResource(R.string.inspections_room_name), validation, Modifier.testTag("result_room_name"))
+            WalkoryRequiredField(name, { name = it }, stringResource(R.string.inspections_room_name), validation, Modifier.testTag("result_room_name"))
             Text(stringResource(R.string.inspections_macro_body))
             Box {
                 OutlinedButton({ templateMenu = true }, Modifier.testTag("result_room_template")) { Text(template?.name ?: stringResource(R.string.inspections_empty_macro)) }
@@ -88,7 +84,12 @@ internal fun AddResultRoomDialog(inspection: Inspection, templates: InspectionCr
             if (templates.loadingTemplates) WalkoryLoading()
             if (templates.templateError) WalkoryError(onRetry)
         }
-    }, confirmButton = { TextButton({ validation = true; if (actualName.isNotBlank() && (selected == null || template != null)) onAdd(type, actualName, template) },
+    }, confirmButton = { TextButton({ validation = true; if (name.isNotBlank() && (selected == null || template != null)) onAdd(type, name, template) },
         enabled = selected == null || template != null, modifier = Modifier.testTag("result_room_add")) { Text(stringResource(R.string.inspections_add_room)) } },
         dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.common_cancel)) } })
+    if (typeMenu) RoomTypePicker({ selectedType, selectedName ->
+        type = selectedType
+        name = selectedName
+        typeMenu = false
+    }, { typeMenu = false })
 }

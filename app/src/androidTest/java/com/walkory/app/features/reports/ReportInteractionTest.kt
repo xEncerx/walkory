@@ -31,17 +31,15 @@ class ReportInteractionTest {
         val saved = mutableStateOf(false)
         val model = ReportViewModel(fixture.reports, fixture.reportSettings,
             com.walkory.app.platform.pdf.AndroidReportDelivery(fixture.context, fixture.reportFiles), androidx.lifecycle.SavedStateHandle()).also { store.put("reports", it) }
-        compose.setContent { WalkoryTheme { ReportScreen(current.value, saved.value, model, {}) } }
-        compose.onNodeWithTag("report_generate").assertIsNotEnabled()
+        compose.setContent { WalkoryTheme { ReportScreen(current.value, saved.value, model) } }
+        compose.onNodeWithText(fixture.context.getString(com.walkory.app.R.string.reports_wait_saved)).assertIsDisplayed()
         compose.runOnIdle { saved.value = true }
-        compose.onNodeWithTag("report_generate").performScrollTo().performClick()
         compose.waitUntil(15_000) { model.state.value[original.id]?.report != null }
-        compose.onNodeWithTag("report_ready").assertIsDisplayed()
+        compose.onNodeWithTag("report_preview").assertIsDisplayed()
         val first = model.state.value[original.id]!!.report!!
         runBlocking { assertEquals(original, fixture.inspections.read(original.id)) }
         val completed = runBlocking { fixture.inspections.update(original.id) { InspectionOperations().complete(it, true) }.accepted() }
         compose.runOnIdle { current.value = completed }
-        compose.onNodeWithTag("report_generate").performScrollTo().performClick()
         compose.waitUntil(15_000) { model.state.value[original.id]?.report?.fileId != first.fileId }
         val second = model.state.value[original.id]!!.report!!
         assertNotEquals(first.fileId, second.fileId)
@@ -67,27 +65,26 @@ class ReportInteractionTest {
         restoration.setContent {
             WalkoryTheme {
                 Box(Modifier.requiredSize(400.dp, if (shortWindow.value) 300.dp else 700.dp)) {
-                    ReportScreen(original, true, model, {})
+                    ReportScreen(original, true, model)
                 }
             }
         }
-        compose.onNodeWithTag("report_next").performClick()
-        compose.onNodeWithTag("report_position").assertTextEquals(fixture.context.getString(com.walkory.app.R.string.reports_position, 2, report.pageCount))
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("report_preview").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("report_pages").performScrollToIndex(1)
+        compose.onNodeWithTag("report_page_1").assertIsDisplayed()
         restoration.emulateSavedInstanceStateRestore()
-        compose.onNodeWithTag("report_position").assertTextEquals(fixture.context.getString(com.walkory.app.R.string.reports_position, 2, report.pageCount))
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("report_preview").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("report_page_1").assertIsDisplayed()
         compose.runOnIdle { shortWindow.value = true }
-        compose.onNodeWithTag("report_position").assertTextEquals(fixture.context.getString(com.walkory.app.R.string.reports_position, 2, report.pageCount))
-        compose.onNodeWithTag("report_zoom").performClick()
-        compose.onNodeWithTag("report_zoom").assertContentDescriptionEquals(fixture.context.getString(com.walkory.app.R.string.reports_fit))
-        compose.onNodeWithTag("report_zoom").performClick()
+        compose.onNodeWithTag("report_page_1").assertIsDisplayed()
         val file = fixture.reportFiles.report(report.fileId)
         val retained = java.io.File(fixture.directory, "retained.pdf")
         assertTrue(file.renameTo(retained))
-        compose.onNodeWithTag("report_next").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithTag("report_preview_retry").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("report_pages").performScrollToIndex(report.pageCount - 1)
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("report_preview_retry_${report.pageCount - 1}").fetchSemanticsNodes().isNotEmpty() }
         assertTrue(retained.renameTo(file))
-        compose.onNodeWithTag("report_preview_retry").performScrollTo().performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithTag("report_preview_retry").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("report_preview_retry_${report.pageCount - 1}").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("report_preview_retry_${report.pageCount - 1}").fetchSemanticsNodes().isEmpty() }
         val bytes = file.readBytes()
         compose.runOnIdle {
             model.chooseDestination(original.id, "Report.pdf")

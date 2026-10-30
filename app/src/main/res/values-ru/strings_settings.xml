@@ -2,7 +2,7 @@
 <resources>
     <string name="settings_title">Настройки</string>
     <string name="settings_about">О Walkory</string>
-    <string name="settings_about_body">Осмотры квартиры при аренде с локальным хранением.</string>
+    <string name="settings_about_body">Walkory — приложение с <annotation github="source">открытым исходным кодом</annotation> для фиксации состояния недвижимости при въезде и выезде. Проверяйте помещения, добавляйте замечания и фотографии, составляйте PDF-отчёт.</string>
     <string name="settings_language">Язык приложения</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_accent">Цветовое оформление</string>
@@ -24,9 +24,6 @@
     <string name="settings_amber">Янтарный</string>
     <string name="settings_monochrome">Монохромный</string>
     <string name="settings_dynamic_colors">Цвета обоев Android</string>
-    <string name="settings_dynamic_note">Доступны с Android 12. Выбранная палитра сохраняется как запасной вариант.</string>
-    <string name="settings_dynamic_fallback">Цвета обоев доступны с Android 12. На этом устройстве используется выбранная палитра.</string>
-    <string name="settings_accent_preview">Пример акцента</string>
     <string name="settings_percent">%1$d%%</string>
     <string name="settings_scale_note">Масштаб приложения сочетается с системным размером шрифта.</string>
     <string name="settings_contrast">Повышенный контраст</string>
@@ -36,9 +33,12 @@
     <string name="settings_high">Высокое</string>
     <string name="settings_pdf_note">Влияет только на фотографии в создаваемых PDF. Исходные фотографии и подписи не изменяются.</string>
     <string name="settings_inspector_note">Необязательный текст только для новых осмотров. Существующие осмотры и черновики не меняются. В каждом осмотре поле можно изменить или очистить.</string>
-    <string name="settings_language_note">Меняются только подписи интерфейса и формат дат. Авторский и скопированный текст остаётся на исходном языке.</string>
     <string name="settings_apply">Применить</string>
     <string name="settings_reset">Сбросить настройки</string>
     <string name="settings_reset_title">Сбросить настройки?</string>
     <string name="settings_reset_body">Язык, тема, цвета, доступность, качество PDF и проверяющий вернутся к значениям по умолчанию. Осмотры, карточки объектов, шаблоны и фотографии сохранятся.</string>
+    <string name="settings_workflow_body">Выберите свою роль и заполните данные объекта. Добавьте помещения, выберите шаблон списка проверок или составьте свой. Отмечайте состояние, при необходимости добавляйте комментарии, замечания и фотографии.</string>
+    <string name="settings_report_data">Отчёт и данные</string>
+    <string name="settings_report_data_body">Составьте PDF на любом этапе осмотра, затем сохраните или отправьте его. Осмотры и фотографии хранятся на этом устройстве.</string>
+    <string name="settings_browser_missing">На устройстве нет браузера для открытия ссылки.</string>
 </resources>

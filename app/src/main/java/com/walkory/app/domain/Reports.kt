@@ -37,7 +37,7 @@ interface ReportSnapshots {
 }
 
 interface ReportEngine {
-    /** Off-main, cancellable, full report. Does not complete or otherwise mutate the inspection. */
+    /** Off-main, cancellable full report. Reuses identical inputs; never mutates or completes the inspection. */
     suspend fun generate(
         request: ReportRequest,
         onProgress: suspend (ReportProgress) -> Unit = {},

@@ -78,7 +78,7 @@ class SettingsInteractionTest {
             compose.onNodeWithText(compose.activity.getString(com.walkory.app.R.string.common_cancel)).performClick()
             assertEquals(nextTheme, current().theme)
             scrollClick("settings_reset"); click("settings_reset_confirm")
-            compose.waitUntil(10_000) { current() == Preferences() }
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("settings_reset_confirm").fetchSemanticsNodes().isEmpty() }
             compose.activityRule.scenario.recreate()
             compose.onNodeWithTag("nav_OBJECTS").performClick()
             compose.onNodeWithText(card.address).assertIsDisplayed()

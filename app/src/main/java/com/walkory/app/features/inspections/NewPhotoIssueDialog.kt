@@ -26,12 +26,11 @@ internal fun NewPhotoIssueDialog(id: InspectionId, check: InspectionCheck, workf
     val issue = check.issues.find { it.id.value == issueId }
     LaunchedEffect(issue?.id) { if (issue != null) emptyError = false }
     val owner = PhotographOwner.IssueEvidence(check.id, IssueId(issueId))
-    AlertDialog(onDismissRequest = onClose, title = { Text(stringResource(R.string.inspections_add_issue)) },
+    AlertDialog(modifier = Modifier.dismissKeyboardOnOutsideTap(), onDismissRequest = onClose, title = { Text(stringResource(R.string.inspections_add_issue)) },
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-            OutlinedTextField(description, { description = it; emptyError = false }, label = { Text(stringResource(R.string.inspections_issue_description)) },
+            WalkoryTextField(description, { description = it; emptyError = false }, label = { Text(stringResource(R.string.inspections_issue_description)) },
                 modifier = Modifier.fillMaxWidth().testTag("result_edit_text"))
             if (emptyError) Text(stringResource(R.string.inspections_empty_issue), color = MaterialTheme.colorScheme.error)
-            Text(stringResource(R.string.inspections_media_issue_autosaved))
             PhotographFeedback(photographs)
             PhotographCollection(id, owner, issue?.photos.orEmpty(), photographs,
                 { selectedOwner, photo, caption -> workflow.caption(id, selectedOwner, photo, caption) },

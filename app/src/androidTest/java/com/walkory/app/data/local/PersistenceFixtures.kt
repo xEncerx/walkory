@@ -47,7 +47,7 @@ internal class PersistenceFixture : AutoCloseable {
         val coordinator = AttachmentStorageCoordinator(database.records(), files)
         inspections = RoomInspectionRepository(database, coordinator)
         reportSnapshots = RoomReportSnapshots(database, coordinator, files, reportFiles)
-        reports = com.walkory.app.platform.pdf.ITextReportEngine(context, reportSnapshots, reportFiles)
+        reports = com.walkory.app.platform.pdf.ITextReportEngine(context, reportSnapshots, reportFiles, inspections)
         properties = RoomPropertyRepository(database)
         templates = RoomTemplateRepository(database)
     }

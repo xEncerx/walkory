@@ -16,40 +16,66 @@ import com.walkory.app.ui_kit.*
 
 @Composable
 internal fun ResultOverviewScreen(record: InspectionResultState, model: InspectionWorkflowViewModel, onRoom: (RoomId) -> Unit,
-    onSummary: (Boolean) -> Unit, templates: InspectionCreationState, onRetryTemplates: () -> Unit, actions: @Composable () -> Unit) {
+    onSummary: (Boolean) -> Unit, templates: InspectionCreationState, onRetryTemplates: () -> Unit,
+    onReport: () -> Unit, actions: @Composable () -> Unit) {
     val inspection = record.inspection
     val progress = inspection.progress()
     var completing by rememberSaveable { mutableStateOf(false) }
     var adding by rememberSaveable { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize().testTag("inspection_overview"), contentPadding = PaddingValues(WalkorySpacing.medium),
         verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
-        item {
-            Text(inspection.details.property.address, style = MaterialTheme.typography.titleLarge)
-            Text(stringResource(inspection.details.role.label()))
-            Text(formattedDate(inspection.details.date))
-            inspection.details.inspector?.takeIf { it.isNotEmpty() }?.let { Text(stringResource(R.string.inspections_inspector_value, it)) }
-            Text(stringResource(if (inspection.state == InspectionState.COMPLETED) R.string.inspections_completed else R.string.inspections_in_progress))
-            LinearProgressIndicator(progress = { progress.fraction.toFloat() }, modifier = Modifier.fillMaxWidth())
-            Text(stringResource(R.string.inspections_progress, progress.checkedChecks, progress.totalChecks))
-            Text(pluralStringResource(R.plurals.inspections_unchecked, progress.uncheckedChecks, progress.uncheckedChecks))
-            Text(stringResource(R.string.inspections_issue_counts, progress.issueCount, progress.problematicChecks))
+        item("details") {
+            Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+                Column(Modifier.fillMaxWidth().padding(WalkorySpacing.large), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
+                    Text(inspection.details.property.address, style = MaterialTheme.typography.titleLarge)
+                    Text(formattedDate(inspection.details.date), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(inspection.details.role.label()), style = MaterialTheme.typography.labelLarge)
+                    inspection.details.inspector?.takeIf { it.isNotEmpty() }?.let { Text(stringResource(R.string.inspections_inspector_value, it)) }
+                    Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
+                        Text(stringResource(if (inspection.state == InspectionState.COMPLETED) R.string.inspections_completed else R.string.inspections_in_progress),
+                            Modifier.padding(horizontal = WalkorySpacing.medium, vertical = WalkorySpacing.small),
+                            style = MaterialTheme.typography.labelLarge)
+                    }
+                    actions()
+                }
+            }
         }
-        item { actions() }
+        item("progress") {
+            ElevatedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge) {
+                Column(Modifier.padding(WalkorySpacing.large), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
+                    Text(stringResource(R.string.inspections_progress_heading), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.inspections_progress, progress.checkedChecks, progress.totalChecks),
+                        style = MaterialTheme.typography.headlineSmall)
+                    LinearProgressIndicator(progress = { progress.fraction.toFloat() }, modifier = Modifier.fillMaxWidth())
+                }
+                ListItem(onClick = { onSummary(false) }, modifier = Modifier.testTag("result_unchecked"),
+                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)) {
+                    Text(pluralStringResource(R.plurals.inspections_unchecked, progress.uncheckedChecks, progress.uncheckedChecks))
+                }
+                ListItem(onClick = { onSummary(true) }, modifier = Modifier.testTag("result_issues"),
+                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                    supportingContent = { Text(stringResource(R.string.inspections_issue_counts, progress.issueCount, progress.problematicChecks)) }) {
+                    Text(stringResource(R.string.inspections_issues))
+                }
+            }
+        }
+        item("rooms_heading") { Text(stringResource(R.string.inspections_rooms_title), style = MaterialTheme.typography.titleLarge) }
         items(inspection.rooms, key = { it.id.value }) { room ->
             val roomProgress = inspection.copy(rooms = listOf(room)).progress()
             WalkoryRecordRow(room.name, stringResource(R.string.inspections_room_progress, roomProgress.checkedChecks, roomProgress.totalChecks, roomProgress.issueCount), false,
                 { onRoom(room.id) }, Modifier.testTag("overview_room_${room.id.value}"))
         }
-        item {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-                OutlinedButton({ onSummary(true) }, Modifier.testTag("result_issues")) { Text(stringResource(R.string.inspections_issues)) }
-                OutlinedButton({ onSummary(false) }, Modifier.testTag("result_unchecked")) { Text(stringResource(R.string.inspections_check_unchecked)) }
-            }
+        item("add_room") {
+            OutlinedButton({ adding = true }, Modifier.fillMaxWidth().testTag("result_add_room")) { Text(stringResource(R.string.inspections_add_room)) }
         }
-        item { OutlinedButton({ adding = true }, Modifier.testTag("result_add_room")) { Text(stringResource(R.string.inspections_add_room)) } }
-        item {
-            if (inspection.state == InspectionState.IN_PROGRESS) Button({ completing = true }, Modifier.testTag("result_complete")) { Text(stringResource(R.string.inspections_complete)) }
-            else Text(stringResource(R.string.inspections_completed_editable))
+        item("finish") {
+            HorizontalDivider(Modifier.padding(vertical = WalkorySpacing.medium))
+            Column(verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
+                Button(onReport, Modifier.fillMaxWidth().testTag("result_report")) { Text(stringResource(R.string.reports_title)) }
+                if (inspection.state == InspectionState.IN_PROGRESS) OutlinedButton({ completing = true },
+                    Modifier.fillMaxWidth().testTag("result_complete")) { Text(stringResource(R.string.inspections_complete)) }
+                else Text(stringResource(R.string.inspections_completed_editable), style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
     if (completing) WalkoryConfirmation(stringResource(R.string.inspections_complete_title),

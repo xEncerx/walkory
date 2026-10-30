@@ -97,8 +97,8 @@ internal fun PhotographViewer(
             }
         }
         if (editing) {
-            AlertDialog(onDismissRequest = { editing = false }, title = { Text(stringResource(R.string.inspections_media_caption_action)) },
-                text = { OutlinedTextField(caption, { caption = it }, label = { Text(stringResource(R.string.inspections_media_caption)) },
+            AlertDialog(modifier = Modifier.dismissKeyboardOnOutsideTap(), onDismissRequest = { editing = false }, title = { Text(stringResource(R.string.inspections_media_caption_action)) },
+                text = { WalkoryTextField(caption, { caption = it }, label = { Text(stringResource(R.string.inspections_media_caption)) },
                     modifier = Modifier.fillMaxWidth().testTag("photo_caption_input")) },
                 confirmButton = { TextButton({ if (onCaption(photo.id, caption)) editing = false }, Modifier.testTag("photo_caption_save")) { Text(stringResource(R.string.inspections_save)) } },
                 dismissButton = { TextButton({ editing = false }) { Text(stringResource(R.string.common_cancel)) } })

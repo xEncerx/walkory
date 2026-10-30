@@ -50,7 +50,7 @@ internal fun PropertyPicker(properties: CollectionState<PropertyCard>, selectedI
         val saved = (properties as? CollectionState.Content)?.items?.find { it.id.value == state.savedId }
         if (saved != null) { model.acknowledgeSaved(); onSelect(saved) }
     }
-    AlertDialog(onDismissRequest = dismiss,
+    AlertDialog(modifier = Modifier.dismissKeyboardOnOutsideTap(), onDismissRequest = dismiss,
         title = { Text(stringResource(if (state.draft != null) R.string.objects_new else R.string.objects_link)) },
         text = {
             if (state.draft != null) PropertyEditor(state, model)
@@ -72,7 +72,6 @@ internal fun PropertyPicker(properties: CollectionState<PropertyCard>, selectedI
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(dismiss) { Text(stringResource(R.string.common_cancel)) } },
-    )
+        dismissButton = { TextButton(dismiss) { Text(stringResource(R.string.common_cancel)) } },)
     PropertyDiscardConfirmation(state, model) {}
 }

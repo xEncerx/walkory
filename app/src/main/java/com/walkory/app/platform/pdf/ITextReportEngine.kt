@@ -29,27 +29,41 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 
 internal class ITextReportEngine(
     private val context: Context,
     private val snapshots: ReportSnapshots,
     private val files: ReportFiles,
+    private val inspections: InspectionRepository,
     private val photos: ReportPhotoEncoder = ReportPhotoEncoder(),
 ) : ReportEngine {
     override suspend fun generate(request: ReportRequest, onProgress: suspend (ReportProgress) -> Unit): DomainResult<GeneratedReport> {
-        val id = LocalFileId.new()
+        var generatedId: LocalFileId? = null
         var delivered = false
         try {
             val result = withContext(Dispatchers.IO) {
                 files.prepare()
+                val durable = when (val result = inspections.observe(request.inspectionId).first()) {
+                    is DomainResult.Failure -> return@withContext result
+                    is DomainResult.Success -> result.value ?: return@withContext DomainResult.Failure(DomainError.NotFound(RecordKind.INSPECTION))
+                }
+                val key = reportFingerprint(durable, request.localeTag, request.photoQuality)
+                files.cached(key)?.let { return@withContext DomainResult.Success(it) }
+                val id = LocalFileId.new()
+                generatedId = id
                 onProgress(ReportProgress.Staging)
+                var capturedKey = key
                 val rendered = snapshots.withSnapshot(request.inspectionId) { snapshot ->
+                    capturedKey = reportFingerprint(snapshot.inspection, request.localeTag, request.photoQuality)
                     render(snapshot, request, id, onProgress)
                 }
                 if (rendered is DomainResult.Failure) return@withContext rendered
                 currentCoroutineContext().ensureActive()
                 if (!files.partial(id).renameTo(files.report(id))) throw IOException("Cannot commit PDF")
-                DomainResult.Success(GeneratedReport(id, (rendered as DomainResult.Success).value))
+                val report = GeneratedReport(id, (rendered as DomainResult.Success).value)
+                files.remember(capturedKey, report)
+                DomainResult.Success(report)
             }
             delivered = result is DomainResult.Success
             return result
@@ -64,9 +78,11 @@ internal class ITextReportEngine(
         } catch (_: SecurityException) {
             return DomainResult.Failure(DomainError.StorageUnavailable)
         } finally {
-            if (!delivered) withContext(Dispatchers.IO + NonCancellable) {
-                files.partial(id).delete()
-                files.report(id).delete()
+            if (!delivered) generatedId?.let { id ->
+                withContext(Dispatchers.IO + NonCancellable) {
+                    files.partial(id).delete()
+                    files.report(id).delete()
+                }
             }
         }
     }
@@ -91,8 +107,10 @@ internal class ITextReportEngine(
                             coroutine.ensureActive()
                             val page = (event as PdfDocumentEvent).page
                             val canvas = PdfCanvas(page.newContentStreamAfter(), page.resources, pdf)
-                            canvas.beginText().setFontAndSize(font, 9f).moveText(42.0, 24.0)
-                                .showText(text(R.string.reports_page, pdf.getPageNumber(page))).endText()
+                            val number = pdf.getPageNumber(page).toString()
+                            val x = (page.pageSize.width - font.getWidth(number, 9f)) / 2
+                            canvas.beginText().setFontAndSize(font, 9f).moveText(x.toDouble(), 24.0)
+                                .showText(number).endText()
                             canvas.release()
                         }
                     })
@@ -116,7 +134,6 @@ internal class ITextReportEngine(
                         paragraph(text(R.string.reports_unchecked, progress.uncheckedChecks))
                         paragraph(text(R.string.reports_problematic, progress.problematicChecks))
                         paragraph(text(R.string.reports_issue_count, progress.issueCount))
-                        paragraph(text(R.string.reports_neutral_note), 10f)
                         if (inspection.rooms.isEmpty()) paragraph(text(R.string.reports_empty_rooms))
                         var completed = 0
                         onProgress(ReportProgress.Rendering(0, progress.totalChecks))

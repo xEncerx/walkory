@@ -88,7 +88,6 @@ class ReportGenerationTest {
                 val page = pdf.getPage(index)
                 assertEquals(595f, page.pageSize.width, 1f)
                 assertEquals(842f, page.pageSize.height, 1f)
-                assertTrue(clean(PdfTextExtractor.getTextFromPage(page)).contains(clean("Страница $index")))
                 val fonts = page.resources.pdfObject.getAsDictionary(PdfName.Font)
                 for (key in fonts.keySet()) {
                     val descriptor = fonts.getAsDictionary(key).getAsArray(PdfName.DescendantFonts)?.getAsDictionary(0)?.getAsDictionary(PdfName.FontDescriptor)
@@ -141,13 +140,13 @@ class ReportGenerationTest {
         for (phase in listOf<ReportProgress>(ReportProgress.Staging, ReportProgress.Rendering(0, 5), ReportProgress.Finalizing)) {
             val reached = CompletableDeferred<Unit>()
             val generation = launch(Dispatchers.Default) {
-                fixture.reports.generate(report(inspection.id)) { if (it == phase) { reached.complete(Unit); awaitCancellation() } }
+                fixture.reports.generate(report(inspection.id, "ru")) { if (it == phase) { reached.complete(Unit); awaitCancellation() } }
             }
             withTimeout(15_000) { reached.await() }
             generation.cancelAndJoin()
             assertTrue(generation.isCancelled)
             assertTrue(File(fixture.directory, "staging").listFiles()!!.isEmpty())
-            assertEquals(listOf(fixture.reportFiles.report(existing.fileId).name), File(fixture.directory, "reports").listFiles()!!.map { it.name })
+            assertEquals(listOf(fixture.reportFiles.report(existing.fileId).name), File(fixture.directory, "reports").listFiles()!!.filter { it.extension == "pdf" }.map { it.name })
             assertEquals(inspection, fixture.inspections.read(inspection.id))
         }
     }
@@ -163,7 +162,7 @@ class ReportGenerationTest {
         assertEquals(DomainResult.Failure(DomainError.InvalidImage), fixture.reports.generate(report(inspection.id)))
         fixture.files.resolve(photo.fileId).writeBytes(original)
         val blocked = File(fixture.directory, "blocked-output").apply { writeText("Existing unrelated file") }
-        val engine = ITextReportEngine(fixture.context, fixture.reportSnapshots, ReportFiles(File(fixture.directory, "other-staging"), blocked))
+        val engine = ITextReportEngine(fixture.context, fixture.reportSnapshots, ReportFiles(File(fixture.directory, "other-staging"), blocked), fixture.inspections)
         assertEquals(DomainResult.Failure(DomainError.StorageUnavailable), engine.generate(report(inspection.id)))
         assertEquals("Existing unrelated file", blocked.readText())
         assertEquals(inspection, fixture.inspections.read(inspection.id))

@@ -10,7 +10,7 @@ internal enum class MainArea { INSPECTIONS, OBJECTS, TEMPLATES, SETTINGS }
 internal data class AreaRoute(val area: MainArea) : NavKey
 
 @Serializable
-internal enum class Information { HELP, ABOUT, LOCAL_DATA }
+internal enum class Information { ABOUT }
 
 @Serializable
 internal data class InformationRoute(val page: Information) : NavKey

@@ -26,6 +26,7 @@ import com.walkory.app.features.objects.PropertyPicker
 import kotlinx.serialization.Serializable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
 import com.walkory.app.features.reports.ReportViewModel
 import com.walkory.app.features.reports.ReportScreen
 
@@ -57,6 +58,7 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
     val historyState by history.state.collectAsStateWithLifecycle()
     var choosingProperty by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
+    var removingCheck by rememberSaveable { mutableStateOf<String?>(null) }
     val stack = rememberNavBackStack(ResultOverview)
     val back: () -> Unit = {
         if (stack.last() == ResultReport) reports.cancel(id)
@@ -71,9 +73,19 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
         ResultReport -> stringResource(R.string.reports_title)
         else -> inspection.details.name
     }
-    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), topBar = { WalkoryTopAppBar(title, back) },
+    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), topBar = {
+        WalkoryTopAppBar(title, back) {
+            if (current == ResultOverview) IconButton({ deleting = true },
+                enabled = historyState.deletingId == null && model.canDelete(id), modifier = Modifier.testTag("result_delete_inspection")) {
+                WalkoryIcon(Icons.Rounded.Delete, description = stringResource(R.string.inspections_delete))
+            }
+            if (current is ResultCheck) IconButton({ removingCheck = current.id }, Modifier.testTag("result_remove_check")) {
+                WalkoryIcon(Icons.Rounded.Delete, description = stringResource(R.string.inspections_remove_check))
+            }
+        }
+    },
         floatingActionButton = {
-            if (current != ResultReport && onNewInspection != null) {
+            if (current == ResultOverview && onNewInspection != null) {
                 FloatingActionButton(onNewInspection, Modifier.testTag("inspection_new")) {
                     WalkoryIcon(Icons.Rounded.Add, description = stringResource(R.string.inspections_new))
                 }
@@ -81,7 +93,7 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
         }) { padding ->
         Column(Modifier.padding(padding).consumeWindowInsets(padding)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = WalkorySpacing.medium)) {
-                WalkorySaveStatus(record.saveStatus, { model.retry(id) })
+                if (record.saveStatus == SaveStatus.ERROR) WalkorySaveStatus(record.saveStatus, { model.retry(id) })
                 if (state.readError) WalkoryError(model::retryRead)
                 com.walkory.app.features.media.PhotographFeedback(photographs)
                 record.error?.let { error ->
@@ -99,16 +111,13 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                 predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                 entryProvider = entryProvider<NavKey> {
                     entry<ResultOverview> {
-                        ResultOverviewScreen(record, model, { stack.add(ResultRoom(it.value)) }, { stack.add(ResultSummary(it)) }, templates, onRetryTemplates) {
-                            Button({ stack.add(ResultReport) }, Modifier.testTag("result_report")) { Text(stringResource(R.string.reports_title)) }
+                        ResultOverviewScreen(record, model, { stack.add(ResultRoom(it.value)) }, { stack.add(ResultSummary(it)) },
+                            templates, onRetryTemplates, { stack.add(ResultReport) }) {
                             val linked = (properties as? CollectionState.Content)?.items?.find { it.id == inspection.propertyId }
                             OutlinedButton({ choosingProperty = true }, enabled = historyState.deletingId == null,
                                 modifier = Modifier.testTag("result_property")) {
                                 Text(linked?.name ?: stringResource(if (inspection.propertyId == null) R.string.objects_standalone else R.string.objects_link))
                             }
-                            Text(stringResource(R.string.objects_link_notice))
-                            TextButton({ deleting = true }, enabled = historyState.deletingId == null && model.canDelete(id),
-                                modifier = Modifier.testTag("result_delete_inspection")) { Text(stringResource(R.string.inspections_delete)) }
                             if (historyState.deletingId == id) WalkoryLoading()
                             if (historyState.deleteError != null && historyState.deleteError != DomainError.AttachmentCleanupPending) {
                                 Text(stringResource(R.string.inspections_delete_failed), color = MaterialTheme.colorScheme.error)
@@ -126,11 +135,11 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
                     entry<ResultCheck> { route ->
                         val room = inspection.rooms.find { room -> room.checks.any { it.id.value == route.id } }
                         val check = room?.checks?.find { it.id.value == route.id }
-                        if (check != null) ResultCheckScreen(id, room, check, route.issue, model, photographs, back)
+                        if (check != null) ResultCheckScreen(id, room, check, route.issue, model, photographs)
                         else ResultMissing(back)
                     }
                     entry<ResultReport> {
-                        ReportScreen(inspection, record.saveStatus != SaveStatus.SAVING && record.saveStatus != SaveStatus.ERROR, reports, back)
+                        ReportScreen(inspection, record.saveStatus != SaveStatus.SAVING && record.saveStatus != SaveStatus.ERROR, reports)
                     }
                     entry<ResultSummary> { route ->
                         ResultSummaryScreen(inspection, route.issues) { check, issue -> stack.add(ResultCheck(check.value, issue?.value)) }
@@ -143,6 +152,12 @@ internal fun InspectionWorkflow(model: InspectionWorkflowViewModel, id: Inspecti
     if (deleting) WalkoryConfirmation(stringResource(R.string.inspections_delete_title, inspection.details.name),
         stringResource(R.string.inspections_delete_body), stringResource(R.string.inspections_delete),
         { if (model.canDelete(id)) history.delete(id); deleting = false }, { deleting = false })
+    removingCheck?.let { check ->
+        WalkoryConfirmation(stringResource(R.string.inspections_remove_check), stringResource(R.string.inspections_delete_check_evidence),
+            stringResource(R.string.inspections_remove_check), {
+                if (model.removeCheck(id, CheckId(check))) { removingCheck = null; back() }
+            }, { removingCheck = null })
+    }
 }
 
 @Composable private fun ResultMissing(onBack: () -> Unit) {

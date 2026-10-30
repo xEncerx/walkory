@@ -116,8 +116,6 @@ class ReportViewModelTest {
         assertTrue(engine.requests.isEmpty())
         delivery.finish.complete(Unit); runCurrent()
         assertEquals(DeliveryStatus.SAVED, model.state.value[id]!!.delivery)
-        model.shareOpened(id)
-        assertEquals(DeliveryStatus.SHARE_OPENED, model.state.value[id]!!.delivery)
         assertEquals(report, model.state.value[id]!!.report)
     }
 }

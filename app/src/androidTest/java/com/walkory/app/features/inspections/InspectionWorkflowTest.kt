@@ -59,7 +59,7 @@ class InspectionWorkflowTest {
     }
     private fun click(tag: String) {
         val node = compose.onNodeWithTag(tag)
-        if (tag == "result_edit_save" || tag == "result_template_save") node.performClick()
+        if (tag in setOf("result_edit_save", "result_template_save", "result_rename_room", "result_remove_check", "result_room_menu", "result_save_template", "result_remove_room", "result_list_done")) node.performClick()
         else node.performScrollTo().performClick()
     }
     private fun fill(tag: String, value: String) { compose.onNodeWithTag(tag).performScrollTo().performTextReplacement(value); compose.runOnIdle { keyboard?.hide() } }
@@ -101,7 +101,7 @@ class InspectionWorkflowTest {
         compose.onNodeWithText(text(R.string.common_cancel)).performClick(); saved()
         assertEquals(CheckState.UNCHECKED, read().rooms.first().checks.first().state)
         assertEquals("General observation", read().rooms.first().checks.first().comment)
-        click("result_back_list"); compose.onNodeWithTag("navigate_back").performClick()
+        compose.onNodeWithTag("navigate_back").performClick(); compose.onNodeWithTag("navigate_back").performClick()
         click("result_unchecked")
         compose.onNodeWithTag("summary_check_${room.checks.first().id.value}").assertExists()
         compose.onNodeWithTag("navigate_back").performClick()
@@ -132,14 +132,15 @@ class InspectionWorkflowTest {
         compose.onNodeWithTag("navigate_back").performClick()
         click("overview_room_${room.id.value}"); click("result_edit_list"); click("result_up_1"); saved()
         click("result_add_check"); fill("result_edit_text", "Door"); fill("result_edit_guidance", "Ordinary controls"); click("result_edit_save"); saved()
+        click("result_list_done")
         click("result_rename_room"); fill("result_edit_text", "Authored bedroom"); click("result_edit_save"); saved()
-        click("result_save_template"); fill("result_template_name", "Independent prepared list"); click("result_template_save")
+        click("result_room_menu"); click("result_save_template"); fill("result_template_name", "Independent prepared list"); click("result_template_save")
         compose.waitUntil(10_000) { model.state.value.records.getValue(original.id).templateStatus == SaveStatus.SAVED }
         confirm(R.string.inspections_room_done)
         val copied = runBlocking { fixture.templates.readAll().single() }
         assertEquals(listOf(TemplateCheck("Window"), TemplateCheck("Floor", "Look at joints"), TemplateCheck("Door", "Ordinary controls")), copied.checks)
         val evidence = read().rooms.first()
-        click("result_remove_room"); compose.onNodeWithText(text(R.string.common_cancel)).performClick()
+        click("result_room_menu"); click("result_remove_room"); compose.onNodeWithText(text(R.string.common_cancel)).performClick()
         assertEquals(evidence, read().rooms.first())
         click("result_check_${room.checks.first().id.value}"); click("result_remove_check")
         compose.onNodeWithText(text(R.string.common_cancel)).performClick()
@@ -147,7 +148,7 @@ class InspectionWorkflowTest {
         click("result_remove_check"); confirm(R.string.inspections_remove_check); saved()
         assertEquals(listOf("Window", "Door"), read().rooms.first().checks.map { it.title })
         assertEquals(other.copy(checks = listOf(other.checks.first().copy(state = CheckState.HAS_ISSUE), other.checks.last())), read().rooms.last())
-        click("result_remove_room"); confirm(R.string.inspections_remove_room); saved()
+        click("result_room_menu"); click("result_remove_room"); confirm(R.string.inspections_remove_room); saved()
         compose.onNodeWithTag("inspection_overview").assertIsDisplayed()
         assertEquals(listOf(other.id), read().rooms.map { it.id })
         assertEquals(copied, runBlocking { fixture.templates.readAll().single() })

@@ -15,10 +15,4 @@
     <string name="common_missing_title">Запись недоступна</string>
     <string name="common_missing_body">Возможно, она удалена. Вернитесь к списку.</string>
     <string name="common_help">Как пользоваться</string>
-    <string name="common_help_intro">Состояние квартиры — по пунктам</string>
-    <string name="common_help_role">Выберите роль для каждого осмотра: арендатор при заселении или арендодатель после выезда жильца.</string>
-    <string name="common_help_rooms">Подготовьте помещения с одним шаблоном или своим списком. Скопированный текст принадлежит осмотру.</string>
-    <string name="common_help_results">Отмечайте состояние, отдельные замечания и фотографии. Полный PDF включает и непроверенные пункты.</string>
-    <string name="common_local_data">Данные на устройстве</string>
-    <string name="common_local_data_body">Записи остаются на этом устройстве: без аккаунтов, облака и резервных копий. За пределы приложения выходит только PDF, который вы решите сохранить или передать.</string>
 </resources>

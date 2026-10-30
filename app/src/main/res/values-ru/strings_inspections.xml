@@ -146,7 +146,6 @@
     <string name="inspections_media_delete_body">Будут удалены только эта локальная фотография и её подпись. Остальные фото и оригинал в галерее сохранятся.</string>
     <string name="inspections_media_last_photo">Перед удалением последнего фото добавьте описание замечания или удалите замечание целиком.</string>
     <string name="inspections_media_reset_zoom">Сбросить масштаб</string>
-    <string name="inspections_media_issue_autosaved">Импортированные фото и замечание сохраняются сразу. Закрытие их не удаляет.</string>
     <string name="inspections_media_storage_full">Недостаточно места. Фотографии из этого выбора не добавлены. Освободите место и выберите их снова.</string>
     <string name="inspections_media_unreadable">Не удалось показать эту фотографию. Запись и остальные фотографии сохранены.</string>
     <string name="inspections_search">Название или адрес</string>
@@ -167,4 +166,7 @@
     <string name="inspections_delete_title">Удалить «%1$s»?</string>
     <string name="inspections_delete_body">Будут удалены этот осмотр, его помещения, проверки, замечания и локальные фотографии. Карточки объектов, шаблоны, другие осмотры, оригиналы в галерее и экспортированные PDF сохранятся.</string>
     <string name="inspections_delete_failed">Не удалось удалить осмотр. Он сохранён; повторите удаление.</string>
+    <string name="inspections_ready_rooms">Готовые помещения</string>
+    <string name="inspections_progress_heading">Ход осмотра</string>
+    <string name="inspections_room_actions">Действия с помещением</string>
 </resources>

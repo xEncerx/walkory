@@ -31,7 +31,10 @@ class PropertiesHistoryTest {
     private val expanded = mutableStateOf(false)
     @After fun close() { fixture.close() }
     private fun text(id: Int) = fixture.context.getString(id)
-    private fun click(tag: String) { compose.onNodeWithTag(tag).performScrollTo().performClick() }
+    private fun click(tag: String) {
+        val node = compose.onNodeWithTag(tag)
+        if (tag == "property_delete") node.performClick() else node.performScrollTo().performClick()
+    }
     private fun fill(tag: String, value: String) {
         compose.onNodeWithTag(tag).performScrollTo().performTextReplacement(value)
         compose.runOnIdle { keyboard?.hide() }

@@ -35,6 +35,11 @@ internal fun TemplateEditor(
     val saving = state.saveStatus == SaveStatus.SAVING
     var removeKey by rememberSaveable { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
+    var pendingScroll by remember { mutableStateOf(false) }
+    LaunchedEffect(draft.checks.size) {
+        if (pendingScroll) { listState.animateScrollToItem(draft.checks.size + 1); pendingScroll = false }
+    }
+    val add = { pendingScroll = true; onAddItem() }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = WalkoryLayout.contentWidth).fillMaxSize().testTag("template_editor")) {
             LazyColumn(Modifier.weight(1f).testTag("template_editor_list"), state = listState,
@@ -67,7 +72,7 @@ internal fun TemplateEditor(
                             }
                             TemplateTextField(item.title, { onEditItem(item.key, it, item.guidance) }, stringResource(R.string.templates_item_title),
                                 state.validation, saving, Modifier.testTag("template_item_title_$index"))
-                            OutlinedTextField(item.guidance, { onEditItem(item.key, item.title, it) },
+                            WalkoryTextField(item.guidance, { onEditItem(item.key, item.title, it) },
                                 label = { Text(stringResource(R.string.templates_guidance)) }, enabled = !saving,
                                 modifier = Modifier.fillMaxWidth().testTag("template_item_guidance_$index"))
                             TextButton({ removeKey = item.key }, enabled = !saving, modifier = Modifier.testTag("template_remove_$index")) {
@@ -77,13 +82,21 @@ internal fun TemplateEditor(
                         }
                     }
                 }
+                item("add") {
+                    OutlinedButton(add, enabled = !saving, modifier = Modifier.fillMaxWidth().testTag("template_add_item")) {
+                        Text(stringResource(R.string.templates_add_item))
+                    }
+                }
             }
-            Column(Modifier.fillMaxWidth().padding(horizontal = WalkorySpacing.medium)) {
-                WalkorySaveStatus(state.saveStatus, onSave)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-                    OutlinedButton(onAddItem, enabled = !saving, modifier = Modifier.testTag("template_add_item")) { Text(stringResource(R.string.templates_add_item)) }
-                    Button(onSave, enabled = !saving, modifier = Modifier.testTag("template_save")) { Text(stringResource(R.string.templates_save)) }
-                    TextButton(onDiscard, enabled = !saving, modifier = Modifier.testTag("template_discard")) { Text(stringResource(R.string.templates_discard)) }
+            Surface(tonalElevation = WalkorySpacing.small) {
+                Column(Modifier.fillMaxWidth().imePadding().padding(WalkorySpacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
+                    WalkorySaveStatus(state.saveStatus, onSave)
+                    TextButton(add, enabled = !saving, modifier = Modifier.testTag("template_add_quick")) {
+                        Text(stringResource(R.string.templates_add_quick))
+                    }
+                    WalkoryEditorActions(stringResource(R.string.templates_save), stringResource(R.string.templates_discard),
+                        onSave, onDiscard, enabled = !saving)
                 }
             }
         }
@@ -95,7 +108,7 @@ internal fun TemplateEditor(
 @Composable
 private fun TemplateTextField(value: String, onChange: (String) -> Unit, label: String, validation: Boolean, saving: Boolean, modifier: Modifier) {
     val invalid = requiredTextError(value, validation)
-    OutlinedTextField(value, onChange, label = { Text(label) }, enabled = !saving, isError = invalid,
+    WalkoryTextField(value, onChange, label = { Text(label) }, enabled = !saving, isError = invalid,
         supportingText = if (invalid) ({ Text(stringResource(R.string.common_required_field)) }) else null,
         modifier = modifier.fillMaxWidth())
 }

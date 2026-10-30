@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="reports_title">Полный отчёт PDF</string>
+    <string name="reports_title">Составить отчёт</string>
     <string name="reports_generate">Сформировать PDF</string>
-    <string name="reports_regenerate">Сформировать заново</string>
     <string name="reports_contents">Все пункты и состояния, комментарии, отдельные замечания, фотографии состояния и замечаний с подписями.</string>
     <string name="reports_unchecked_notice">Непроверенные пункты будут явно обозначены в отчёте.</string>
     <string name="reports_wait_saved">Перед формированием отчёта дождитесь сохранения всех изменений.</string>
@@ -11,12 +10,6 @@
     <string name="reports_finalizing">Завершаем PDF…</string>
     <string name="reports_cancel">Отменить формирование</string>
     <string name="reports_cancelled">Формирование отменено. Данные осмотра не изменены.</string>
-    <plurals name="reports_ready">
-        <item quantity="one">PDF сформирован: %1$d страница. Данные осмотра не изменены.</item>
-        <item quantity="few">PDF сформирован: %1$d страницы. Данные осмотра не изменены.</item>
-        <item quantity="many">PDF сформирован: %1$d страниц. Данные осмотра не изменены.</item>
-        <item quantity="other">PDF сформирован: %1$d страницы. Данные осмотра не изменены.</item>
-    </plurals>
     <string name="reports_error_storage">Не удалось записать PDF. Проверьте свободное место на устройстве и повторите. Данные осмотра не изменены.</string>
     <string name="reports_error_full">Недостаточно места для отчёта. Освободите место и повторите.</string>
     <string name="reports_error_photo">Не удалось прочитать необходимую фотографию. Проверьте фотографии осмотра и повторите; неполный PDF не создан.</string>
@@ -52,24 +45,16 @@
     <string name="reports_no_description">Описание не добавлено.</string>
     <string name="reports_condition_photo">Фото состояния %1$s</string>
     <string name="reports_issue_photo">Фото замечания %1$s</string>
-    <string name="reports_page">Страница %1$d</string>
     <string name="reports_caption">Подпись: %1$s</string>
-    <string name="reports_neutral_note">Отчёт фиксирует наблюдаемое состояние. Он не определяет ответственность и не удостоверяет соответствие правовым или техническим требованиям.</string>
     <string name="reports_attribution">Создано с помощью iText Community (AGPLv3). Noto Sans © 2018 The Noto Project Authors; SIL Open Font License 1.1.</string>
-    <string name="reports_previous">Предыдущая страница</string>
-    <string name="reports_next">Следующая страница</string>
     <string name="reports_position">Страница %1$d из %2$d</string>
-    <string name="reports_zoom">Увеличить</string>
-    <string name="reports_fit">Вписать страницу</string>
-    <string name="reports_preview_error">Не удалось открыть PDF. Повторите просмотр или сформируйте отчёт заново. Сохранение и передача доступны.</string>
+    <string name="reports_preview_error">Не удалось показать страницу PDF. Повторите попытку. Сохранение и передача доступны.</string>
     <string name="reports_retry">Повторить просмотр</string>
     <string name="reports_save">Сохранить PDF</string>
     <string name="reports_share">Поделиться PDF</string>
-    <string name="reports_return">Вернуться к осмотру</string>
     <string name="reports_saving">Сохраняем PDF…</string>
     <string name="reports_saved">PDF сохранён. Статус осмотра не изменён.</string>
     <string name="reports_save_cancelled">Сохранение отменено. Осмотр и сформированный PDF не изменены.</string>
-    <string name="reports_share_opened">Открыто меню передачи. Выберите приложение для продолжения; доставка не подтверждена.</string>
     <string name="reports_save_full">Недостаточно места. Освободите место или выберите другую папку и повторите сохранение.</string>
     <string name="reports_artifact_missing">PDF или выбранное место сохранения недоступно. Сформируйте отчёт заново или выберите другое место. Данные осмотра не изменены.</string>
     <string name="reports_delivery_error">Не удалось сохранить или передать PDF. Повторите сохранение в другое место или передачу. Данные осмотра и прежние экспорты не изменены.</string>

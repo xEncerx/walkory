@@ -101,7 +101,7 @@ fun WalkoryTheme(
             typography = typography,
             shapes = WalkoryShapes,
             motionScheme = if (reducedMotion) ReducedMotionScheme else MotionScheme.expressive(),
-            content = content,
+            content = { androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.dismissKeyboardOnOutsideTap()) { content() } },
         )
     }
 }

@@ -24,7 +24,7 @@ internal data class ReportState(
     val total: Long = 0,
 )
 
-internal enum class DeliveryStatus { IDLE, CHOOSING, SAVING, SAVED, CANCELLED, FAILED, SHARE_OPENED }
+internal enum class DeliveryStatus { IDLE, CHOOSING, SAVING, SAVED, CANCELLED, FAILED }
 internal data class SaveRequest(val inspection: InspectionId, val report: GeneratedReport, val name: String, val launched: Boolean)
 
 internal class ReportViewModel(
@@ -100,8 +100,8 @@ internal class ReportViewModel(
         update(id) { it.copy(delivery = DeliveryStatus.FAILED, deliveryError = error) }
     }
 
-    fun shareOpened(id: InspectionId) {
-        update(id) { it.copy(delivery = DeliveryStatus.SHARE_OPENED, deliveryError = null) }
+    fun dismissDeliveryError(id: InspectionId) {
+        update(id) { it.copy(delivery = DeliveryStatus.IDLE, deliveryError = null) }
     }
 
     fun cancelSave(id: InspectionId) { if (savingId == id) saveJob?.cancel() }

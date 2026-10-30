@@ -140,7 +140,6 @@
     <string name="inspections_media_delete_body">Delete only this private photograph and its caption. Other photographs and the gallery original are kept.</string>
     <string name="inspections_media_last_photo">Add an issue description before deleting its last photograph, or delete the whole issue.</string>
     <string name="inspections_media_reset_zoom">Reset zoom</string>
-    <string name="inspections_media_issue_autosaved">Imported photographs and this issue are saved immediately. Closing keeps them.</string>
     <string name="inspections_media_storage_full">Not enough storage. No photographs from this selection were added. Free space and select them again.</string>
     <string name="inspections_media_unreadable">This photograph cannot be displayed. The record and other photographs are kept.</string>
     <string name="inspections_search">Name or address</string>
@@ -161,4 +160,7 @@
     <string name="inspections_delete_title">Delete “%1$s”?</string>
     <string name="inspections_delete_body">Delete this inspection, its rooms, checks, issues and private photographs. Property cards, templates, other inspections, gallery originals and exported PDF reports are kept.</string>
     <string name="inspections_delete_failed">The inspection could not be deleted. It is kept; retry the deletion.</string>
+    <string name="inspections_ready_rooms">Ready-made rooms</string>
+    <string name="inspections_progress_heading">Inspection progress</string>
+    <string name="inspections_room_actions">Room actions</string>
 </resources>

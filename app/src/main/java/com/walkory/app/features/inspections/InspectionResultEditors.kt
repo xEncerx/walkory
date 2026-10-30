@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,16 +30,41 @@ internal fun ResultRoomScreen(record: InspectionResultState, room: InspectionRoo
     var renaming by rememberSaveable { mutableStateOf(false) }
     var removing by rememberSaveable { mutableStateOf(false) }
     var savingTemplate by rememberSaveable { mutableStateOf(false) }
+    var menu by remember { mutableStateOf(false) }
     val list = rememberLazyListState()
-    LazyColumn(Modifier.fillMaxSize().testTag("result_room"), state = list, contentPadding = PaddingValues(WalkorySpacing.medium),
+    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {
+            Row(Modifier.fillMaxWidth().padding(WalkorySpacing.medium), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
+                TextButton({ adding = true }, Modifier.testTag("result_add_quick")) { Text(stringResource(R.string.templates_add_quick)) }
+                if (editing) FloatingActionButton(onBack, Modifier.testTag("result_list_done")) {
+                    WalkoryIcon(Icons.Rounded.Save, description = stringResource(R.string.inspections_room_done))
+                }
+            }
+        }) { padding ->
+    LazyColumn(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).testTag("result_room"), state = list, contentPadding = PaddingValues(WalkorySpacing.medium),
         verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
         item("actions") {
-            Text(record.inspection.details.name)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-                if (!editing) OutlinedButton(onEditList, Modifier.testTag("result_edit_list")) { Text(stringResource(R.string.inspections_edit_list)) }
-                TextButton({ renaming = true }, Modifier.testTag("result_rename_room")) { Text(stringResource(R.string.inspections_rename_room)) }
-                TextButton({ model.clearTemplateStatus(id); savingTemplate = true }, enabled = room.checks.isNotEmpty(), modifier = Modifier.testTag("result_save_template")) { Text(stringResource(R.string.inspections_save_template)) }
-                TextButton({ removing = true }, Modifier.testTag("result_remove_room")) { Text(stringResource(R.string.inspections_remove_room)) }
+            if (!editing) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(room.name, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                    IconButton({ renaming = true }, Modifier.testTag("result_rename_room")) {
+                        WalkoryIcon(Icons.Rounded.Edit, description = stringResource(R.string.inspections_rename_room))
+                    }
+                    Box {
+                        IconButton({ menu = true }, Modifier.testTag("result_room_menu")) {
+                            WalkoryIcon(Icons.Rounded.MoreVert, description = stringResource(R.string.inspections_room_actions))
+                        }
+                        DropdownMenu(menu, { menu = false }) {
+                            DropdownMenuItem({ Text(stringResource(R.string.inspections_save_template)) },
+                                { menu = false; model.clearTemplateStatus(id); savingTemplate = true }, enabled = room.checks.isNotEmpty(),
+                                modifier = Modifier.testTag("result_save_template"))
+                            DropdownMenuItem({ Text(stringResource(R.string.inspections_remove_room)) },
+                                { menu = false; removing = true }, modifier = Modifier.testTag("result_remove_room"))
+                        }
+                    }
+                }
+                OutlinedButton(onEditList, Modifier.fillMaxWidth().testTag("result_edit_list")) { Text(stringResource(R.string.inspections_edit_list)) }
             }
             if (room.checks.isEmpty()) Text(stringResource(R.string.inspections_empty_checks))
         }
@@ -52,13 +80,18 @@ internal fun ResultRoomScreen(record: InspectionResultState, room: InspectionRoo
                             WalkoryIcon(Icons.Rounded.ArrowDownward, description = stringResource(R.string.templates_down))
                         }
                     }
-                    WalkoryRecordRow(check.title, stringResource(check.state.resultLabel()), false, { onCheck(check.id) }, Modifier.testTag("result_check_${check.id.value}"))
-                    Text(stringResource(R.string.inspections_issue_counts, check.issues.size, if (check.state == CheckState.HAS_ISSUE) 1 else 0))
+                    ListItem(onClick = { onCheck(check.id) }, modifier = Modifier.testTag("result_check_${check.id.value}"),
+                        supportingContent = {
+                            Column(verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
+                                Text(stringResource(check.state.resultLabel()))
+                                Text(stringResource(R.string.inspections_issue_counts, check.issues.size, if (check.state == CheckState.HAS_ISSUE) 1 else 0))
+                            }
+                        }) { Text(check.title) }
                 }
             }
         }
         item("add") { OutlinedButton({ adding = true }, Modifier.testTag("result_add_check")) { Text(stringResource(R.string.templates_add_item)) } }
-        if (editing) item("done") { Button(onBack, Modifier.testTag("result_list_done")) { Text(stringResource(R.string.inspections_room_done)) } }
+    }
     }
     if (adding) ResultTextDialog(R.string.inspections_new_check, "", "", true,
         { title, guidance -> model.addCheck(id, room.id, title, guidance) }, { adding = false })
@@ -71,11 +104,10 @@ internal fun ResultRoomScreen(record: InspectionResultState, room: InspectionRoo
 
 @Composable
 internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: InspectionCheck, initialIssue: String?, model: InspectionWorkflowViewModel,
-    photographs: com.walkory.app.features.media.PhotographViewModel, onBack: () -> Unit) {
+    photographs: com.walkory.app.features.media.PhotographViewModel) {
     val workflow by model.state.collectAsStateWithLifecycle()
     val saveStatus = workflow.records[id]?.saveStatus ?: SaveStatus.IDLE
     var editing by rememberSaveable { mutableStateOf(false) }
-    var removing by rememberSaveable { mutableStateOf(false) }
     var addingIssue by rememberSaveable { mutableStateOf(false) }
     var editingIssue by rememberSaveable { mutableStateOf(initialIssue) }
     var removingIssue by rememberSaveable { mutableStateOf<String?>(null) }
@@ -93,7 +125,7 @@ internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: In
             ResultStateSelector(check.state) { model.setState(id, check.id, it) }
         }
         item {
-            OutlinedTextField(check.comment.orEmpty(), { model.comment(id, check.id, it) }, label = { Text(stringResource(R.string.inspections_comment)) },
+            WalkoryTextField(check.comment.orEmpty(), { model.comment(id, check.id, it) }, label = { Text(stringResource(R.string.inspections_comment)) },
                 modifier = Modifier.fillMaxWidth().testTag("result_comment"))
         }
         item("condition_photos") {
@@ -120,9 +152,7 @@ internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: In
             OutlinedButton({ addingIssue = true }, Modifier.testTag("result_add_issue")) { Text(stringResource(R.string.inspections_add_issue)) }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
                 TextButton({ editing = true }, Modifier.testTag("result_edit_check")) { Text(stringResource(R.string.inspections_edit_check)) }
-                TextButton({ removing = true }, Modifier.testTag("result_remove_check")) { Text(stringResource(R.string.inspections_remove_check)) }
             }
-            TextButton(onBack, Modifier.testTag("result_back_list")) { Text(stringResource(R.string.inspections_back_list)) }
         }
     }
     if (editing) ResultTextDialog(R.string.inspections_edit_check, check.title, check.guidance.orEmpty(), true,
@@ -132,8 +162,6 @@ internal fun ResultCheckScreen(id: InspectionId, room: InspectionRoom, check: In
         ResultTextDialog(R.string.inspections_edit_issue, issue.description.orEmpty(), null, issue.photos.isEmpty(),
             { description, _ -> model.editIssue(id, check.id, issue.id, description) }, { editingIssue = null }, issue = true)
     }
-    if (removing) WalkoryConfirmation(stringResource(R.string.inspections_remove_check), stringResource(R.string.inspections_delete_check_evidence),
-        stringResource(R.string.inspections_remove_check), { if (model.removeCheck(id, check.id)) { removing = false; onBack() } }, { removing = false })
     check.issues.find { it.id.value == removingIssue }?.let { issue ->
         WalkoryConfirmation(stringResource(R.string.inspections_delete_issue), stringResource(R.string.inspections_delete_issue_evidence),
             stringResource(R.string.inspections_delete_issue), {

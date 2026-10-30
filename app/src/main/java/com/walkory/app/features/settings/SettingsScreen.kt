@@ -2,6 +2,8 @@ package com.walkory.app.features.settings
 
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -26,7 +28,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.walkory.app.R
 import com.walkory.app.app.Information
-import com.walkory.app.app.titleResource
 import com.walkory.app.domain.*
 import com.walkory.app.ui_kit.*
 
@@ -50,27 +51,36 @@ internal fun SettingsWorkspace(model: SettingsViewModel, onInformation: (Informa
             .padding(WalkorySpacing.medium).testTag("settings_list"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (state.loadError) WalkoryError(model::retry)
             SettingsSection.entries.forEach { section ->
-                TextButton({ model.open(section) }, Modifier.fillMaxWidth().testTag("settings_${section.name}")) {
-                    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Text(stringResource(section.title()), style = MaterialTheme.typography.titleMedium)
-                        Text(when (section) {
-                            SettingsSection.LANGUAGE -> stringResource(p.language.label())
-                            SettingsSection.THEME -> stringResource(p.theme.label())
-                            SettingsSection.ACCENT -> stringResource(p.accent.label())
-                            SettingsSection.ACCESSIBILITY -> stringResource(R.string.settings_accessibility_summary, p.textScale.percent)
-                            SettingsSection.PDF -> stringResource(p.pdfPhotoQuality.label())
-                            SettingsSection.INSPECTOR -> p.defaultInspector ?: stringResource(R.string.settings_not_set)
-                        }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+                ListItem(
+                    onClick = { model.open(section) },
+                    supportingContent = { Text(when (section) {
+                        SettingsSection.LANGUAGE -> stringResource(p.language.label())
+                        SettingsSection.THEME -> stringResource(p.theme.label())
+                        SettingsSection.ACCENT -> stringResource(if (p.dynamicColors && Build.VERSION.SDK_INT >= 31) R.string.settings_dynamic_colors else p.accent.label())
+                        SettingsSection.ACCESSIBILITY -> stringResource(R.string.settings_accessibility_summary, p.textScale.percent)
+                        SettingsSection.PDF -> stringResource(p.pdfPhotoQuality.label())
+                        SettingsSection.INSPECTOR -> p.defaultInspector ?: stringResource(R.string.settings_not_set)
+                    }) },
+                    leadingContent = { WalkoryIcon(when (section) {
+                        SettingsSection.LANGUAGE -> Icons.Rounded.Language
+                        SettingsSection.THEME -> Icons.Rounded.DarkMode
+                        SettingsSection.ACCENT -> Icons.Rounded.Palette
+                        SettingsSection.ACCESSIBILITY -> Icons.Rounded.Accessibility
+                        SettingsSection.PDF -> Icons.Rounded.PictureAsPdf
+                        SettingsSection.INSPECTOR -> Icons.Rounded.Person
+                    }) },
+                    modifier = Modifier.fillMaxWidth().testTag("settings_${section.name}"),
+                ) { Text(stringResource(section.title())) }
             }
-            Information.entries.forEach { page ->
-                TextButton({ onInformation(page) }, Modifier.fillMaxWidth().testTag("settings_info_${page.name}")) {
-                    Text(stringResource(page.titleResource()))
-                }
+            ListItem(onClick = { onInformation(Information.ABOUT) },
+                leadingContent = { WalkoryIcon(Icons.Rounded.Info) },
+                modifier = Modifier.testTag("settings_info_ABOUT")) { Text(stringResource(R.string.settings_about)) }
+            ListItem(onClick = model::requestReset,
+                leadingContent = { WalkoryIcon(Icons.Rounded.RestartAlt) },
+                modifier = Modifier.testTag("settings_reset")) { Text(stringResource(R.string.settings_reset)) }
+            if (state.saveStatus != SaveStatus.SAVED) {
+                WalkorySaveStatus(state.saveStatus, if (state.confirmReset) model::reset else model::apply)
             }
-            OutlinedButton(model::requestReset, Modifier.fillMaxWidth().testTag("settings_reset")) { Text(stringResource(R.string.settings_reset)) }
-            WalkorySaveStatus(state.saveStatus, if (state.confirmReset) model::reset else model::apply)
         }
     }
     state.edit?.let { draft -> SettingsEditor(draft, state.saveStatus, model::edit, model::apply, model::dismiss) }
@@ -92,7 +102,7 @@ internal fun SettingsWorkspace(model: SettingsViewModel, onInformation: (Informa
 @Composable
 private fun SettingsEditor(draft: SettingsEdit, status: SaveStatus, onEdit: (SettingsEdit) -> Unit, onApply: () -> Unit, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(decorFitsSystemWindows = false)) {
-        Surface(modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing), shape = MaterialTheme.shapes.extraLarge) {
+        Surface(modifier = Modifier.dismissKeyboardOnOutsideTap().windowInsetsPadding(WindowInsets.safeDrawing), shape = MaterialTheme.shapes.extraLarge) {
             Column(Modifier.widthIn(max = 560.dp).verticalScroll(rememberScrollState()).padding(WalkorySpacing.large)
                 .testTag("settings_editor"), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
                 Text(stringResource(draft.section.title()), style = MaterialTheme.typography.headlineSmall)
@@ -100,17 +110,23 @@ private fun SettingsEditor(draft: SettingsEdit, status: SaveStatus, onEdit: (Set
                 when (draft.section) {
                     SettingsSection.LANGUAGE -> {
                         Choices(AppLanguage.entries, draft.choice, { stringResource(it.label()) }, enabled) { onEdit(draft.copy(choice = it)) }
-                        Text(stringResource(R.string.settings_language_note))
                     }
                     SettingsSection.THEME -> Choices(AppTheme.entries, draft.choice, { stringResource(it.label()) }, enabled) { onEdit(draft.copy(choice = it)) }
                     SettingsSection.ACCENT -> {
-                        Choices(Accent.entries, draft.choice, { stringResource(it.label()) }, enabled) { onEdit(draft.copy(choice = it)) }
-                        Toggle(stringResource(R.string.settings_dynamic_colors), draft.dynamic, enabled, "settings_dynamic") { onEdit(draft.copy(dynamic = it)) }
-                        Text(stringResource(if (Build.VERSION.SDK_INT >= 31) R.string.settings_dynamic_note else R.string.settings_dynamic_fallback))
-                        val preview = MaterialTheme.colorScheme.withAccent(Accent.valueOf(draft.choice), MaterialTheme.colorScheme.surface.luminance() < 0.5f)
-                        Surface(color = preview.primaryContainer, contentColor = preview.onPrimaryContainer,
-                            shape = MaterialTheme.shapes.medium) {
-                            Text(stringResource(R.string.settings_accent_preview), Modifier.fillMaxWidth().padding(WalkorySpacing.medium))
+                        val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+                        Column(Modifier.selectableGroup()) {
+                            if (Build.VERSION.SDK_INT >= 31) AccentChoice(
+                                stringResource(R.string.settings_dynamic_colors), draft.dynamic,
+                                (if (dark) dynamicDarkColorScheme(androidx.compose.ui.platform.LocalContext.current)
+                                else dynamicLightColorScheme(androidx.compose.ui.platform.LocalContext.current)).primary,
+                                enabled, "settings_dynamic",
+                            ) { onEdit(draft.copy(dynamic = true, choice = Accent.TEAL.name)) }
+                            Accent.entries.forEach { accent ->
+                                AccentChoice(stringResource(accent.label()), !draft.dynamic && draft.choice == accent.name,
+                                    MaterialTheme.colorScheme.withAccent(accent, dark).primary, enabled, "settings_choice_${accent.name}") {
+                                    onEdit(draft.copy(choice = accent.name, dynamic = false))
+                                }
+                            }
                         }
                     }
                     SettingsSection.ACCESSIBILITY -> {
@@ -124,7 +140,7 @@ private fun SettingsEditor(draft: SettingsEdit, status: SaveStatus, onEdit: (Set
                         Text(stringResource(R.string.settings_pdf_note))
                     }
                     SettingsSection.INSPECTOR -> {
-                        OutlinedTextField(draft.choice, { onEdit(draft.copy(choice = it)) }, label = { Text(stringResource(R.string.settings_inspector)) },
+                        WalkoryTextField(draft.choice, { onEdit(draft.copy(choice = it)) }, label = { Text(stringResource(R.string.settings_inspector)) },
                             enabled = enabled, modifier = Modifier.fillMaxWidth().testTag("settings_inspector_input"))
                         Text(stringResource(R.string.settings_inspector_note))
                     }
@@ -135,6 +151,18 @@ private fun SettingsEditor(draft: SettingsEdit, status: SaveStatus, onEdit: (Set
                 TextButton(onDismiss, Modifier.fillMaxWidth().testTag("settings_cancel"), enabled = enabled) { Text(stringResource(R.string.common_cancel)) }
             }
         }
+    }
+}
+
+@Composable
+private fun AccentChoice(label: String, selected: Boolean, color: androidx.compose.ui.graphics.Color,
+    enabled: Boolean, tag: String, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected, enabled = enabled,
+        role = Role.RadioButton, onClick = onClick).testTag(tag).padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        RadioButton(selected, onClick = null, enabled = enabled)
+        Surface(Modifier.size(24.dp), color = color, shape = MaterialTheme.shapes.extraSmall) {}
+        Text(label, Modifier.weight(1f))
     }
 }
 

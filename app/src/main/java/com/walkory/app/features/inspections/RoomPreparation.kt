@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -30,6 +31,11 @@ internal fun PreparedRoomForm(
     var validation by rememberSaveable { mutableStateOf(false) }
     var removeId by rememberSaveable { mutableStateOf<String?>(null) }
     val list = rememberLazyListState()
+    var pendingScroll by remember { mutableStateOf(false) }
+    LaunchedEffect(room.checks.size) {
+        if (pendingScroll) { list.animateScrollToItem(room.checks.size + 1); pendingScroll = false }
+    }
+    val add = { pendingScroll = true; onAdd(id) }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = WalkoryLayout.contentWidth).fillMaxSize().testTag("room_preparation")) {
             LazyColumn(Modifier.weight(1f).testTag("room_checks"), state = list, contentPadding = PaddingValues(WalkorySpacing.medium),
@@ -58,17 +64,24 @@ internal fun PreparedRoomForm(
                             }
                             WalkoryRequiredField(check.title, { onEdit(id, check.id, it, check.guidance) }, stringResource(R.string.templates_item_title), validation,
                                 Modifier.testTag("room_check_title_$index"))
-                            OutlinedTextField(check.guidance, { onEdit(id, check.id, check.title, it) }, label = { Text(stringResource(R.string.templates_guidance)) },
+                            WalkoryTextField(check.guidance, { onEdit(id, check.id, check.title, it) }, label = { Text(stringResource(R.string.templates_guidance)) },
                                 modifier = Modifier.fillMaxWidth().testTag("room_check_guidance_$index"))
                             TextButton({ removeId = check.id }, Modifier.testTag("room_check_remove_$index")) { Text(stringResource(R.string.templates_remove_item)) }
                         }
                     }
                 }
+                item("add") {
+                    OutlinedButton(add, Modifier.fillMaxWidth().testTag("room_add_check")) { Text(stringResource(R.string.templates_add_item)) }
+                }
             }
-            FlowRow(Modifier.padding(horizontal = WalkorySpacing.medium), horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-                OutlinedButton({ onAdd(id) }, Modifier.testTag("room_add_check")) { Text(stringResource(R.string.templates_add_item)) }
-                Button({ validation = true; if (room.name.isNotBlank() && room.checks.all { it.title.isNotBlank() }) onDone() }, Modifier.testTag("room_done")) {
-                    Text(stringResource(R.string.inspections_room_done))
+            Row(Modifier.fillMaxWidth().imePadding().padding(WalkorySpacing.medium),
+                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                TextButton(add, Modifier.testTag("room_add_quick")) { Text(stringResource(R.string.templates_add_quick)) }
+                FloatingActionButton({
+                    validation = true
+                    if (room.name.isNotBlank() && room.checks.all { it.title.isNotBlank() }) onDone()
+                }, Modifier.testTag("room_done")) {
+                    WalkoryIcon(Icons.Rounded.Check, description = stringResource(R.string.inspections_room_done))
                 }
             }
         }

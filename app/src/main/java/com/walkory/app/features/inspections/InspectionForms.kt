@@ -16,6 +16,7 @@ import com.walkory.app.R
 import com.walkory.app.domain.*
 import com.walkory.app.ui_kit.*
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -60,7 +61,7 @@ internal fun InspectionDetailsForm(state: InspectionCreationState, onDetails: (S
         OutlinedButton({ showDate = true }, Modifier.fillMaxWidth().testTag("inspection_date")) {
             Text(stringResource(R.string.inspections_date_value, formattedDate(LocalDate.parse(draft.date))))
         }
-        OutlinedTextField(draft.inspector, { onDetails(draft.name, draft.address, it) }, label = { Text(stringResource(R.string.inspections_inspector)) },
+        WalkoryTextField(draft.inspector, { onDetails(draft.name, draft.address, it) }, label = { Text(stringResource(R.string.inspections_inspector)) },
             modifier = Modifier.fillMaxWidth().testTag("inspection_inspector"))
         OutlinedButton(onProperty, Modifier.fillMaxWidth().testTag("inspection_property")) {
             Text(propertyName ?: stringResource(R.string.objects_link))
@@ -78,6 +79,10 @@ internal fun InspectionRoomsForm(
     val draft = state.draft ?: return
     var adding by rememberSaveable { mutableStateOf(false) }
     var removeId by rememberSaveable { mutableStateOf<String?>(null) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val roomRequired = stringResource(R.string.inspections_room_required)
+    Box(Modifier.fillMaxSize()) {
     InspectionForm("inspection_rooms") {
         Text(stringResource(R.string.inspections_rooms_body))
         draft.rooms.forEach { room ->
@@ -92,7 +97,12 @@ internal fun InspectionRoomsForm(
         }
         if (state.validation && draft.rooms.isEmpty()) Text(stringResource(R.string.inspections_room_required), color = MaterialTheme.colorScheme.error)
         OutlinedButton({ adding = true }, Modifier.testTag("inspection_add_room")) { Text(stringResource(R.string.inspections_add_room)) }
-        Button(onNext, Modifier.testTag("inspection_rooms_next")) { Text(stringResource(R.string.inspections_next_ready)) }
+        Button({
+            if (draft.rooms.isEmpty()) scope.launch { snackbar.showSnackbar(roomRequired) }
+            onNext()
+        }, Modifier.testTag("inspection_rooms_next")) { Text(stringResource(R.string.inspections_next_ready)) }
+    }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).imePadding())
     }
     if (adding) AddPreparedRoomDialog({ type, name -> onAdd(type, name)?.let { adding = false; onEdit(it) } }, { adding = false })
     val room = draft.rooms.find { it.id == removeId }
@@ -102,31 +112,27 @@ internal fun InspectionRoomsForm(
 
 @Composable
 private fun AddPreparedRoomDialog(onAdd: (RoomType, String) -> Unit, onDismiss: () -> Unit) {
-    var type by rememberSaveable { mutableStateOf(RoomType.KITCHEN) }
-    var name by rememberSaveable { mutableStateOf<String?>(null) }
+    var type by rememberSaveable { mutableStateOf(RoomType.CUSTOM) }
+    var name by rememberSaveable { mutableStateOf("") }
     var validation by rememberSaveable { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
-    val defaultName = stringResource(type.roomLabel())
-    val actualName = name ?: defaultName
-    AlertDialog(onDismissRequest = onDismiss,
+    AlertDialog(modifier = Modifier.dismissKeyboardOnOutsideTap(), onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.inspections_add_room)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
-                Box {
-                    OutlinedButton({ menu = true }, Modifier.testTag("room_type")) { Text(stringResource(type.roomLabel())) }
-                    DropdownMenu(menu, { menu = false }) {
-                        RoomType.entries.forEach { option ->
-                            DropdownMenuItem(text = { Text(stringResource(option.roomLabel())) }, onClick = { type = option; menu = false },
-                                modifier = Modifier.testTag("room_type_${option.name}"))
-                        }
-                    }
+                OutlinedButton({ menu = true }, Modifier.testTag("room_type")) {
+                    Text(stringResource(R.string.inspections_ready_rooms))
                 }
-                WalkoryRequiredField(actualName, { name = it }, stringResource(R.string.inspections_room_name), validation, Modifier.testTag("new_room_name"))
+                WalkoryRequiredField(name, { name = it }, stringResource(R.string.inspections_room_name), validation, Modifier.testTag("new_room_name"))
             }
         },
-        confirmButton = { TextButton({ validation = true; if (actualName.isNotBlank()) onAdd(type, actualName) }, Modifier.testTag("room_add_confirm")) { Text(stringResource(R.string.inspections_add_room)) } },
-        dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.common_cancel)) } },
-    )
+        confirmButton = { TextButton({ validation = true; if (name.isNotBlank()) onAdd(type, name) }, Modifier.testTag("room_add_confirm")) { Text(stringResource(R.string.inspections_add_room)) } },
+        dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.common_cancel)) } },)
+    if (menu) RoomTypePicker({ selected, selectedName ->
+        type = selected
+        name = selectedName
+        menu = false
+    }, { menu = false })
 }
 
 @Composable

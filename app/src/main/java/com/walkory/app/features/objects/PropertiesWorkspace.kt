@@ -1,6 +1,9 @@
 package com.walkory.app.features.objects
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
@@ -53,6 +56,8 @@ internal fun PropertiesWorkspace(model: PropertiesViewModel, properties: Collect
     val state by model.state.collectAsStateWithLifecycle()
     val stack = navigation.stack
     val current = stack.last()
+    var deleteId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selected = (properties as? CollectionState.Content)?.items?.find { it.id.value == (current as? PropertyDetailRoute)?.id }
     val back: () -> Unit = {
         if (!state.deleting && state.status != SaveStatus.SAVING && (current != PropertyEditRoute || model.requestDiscard())) {
             if (stack.size > 1) stack.removeAt(stack.lastIndex)
@@ -67,10 +72,18 @@ internal fun PropertiesWorkspace(model: PropertiesViewModel, properties: Collect
             ?: stringResource(R.string.objects_title)
         else -> stringResource(R.string.objects_title)
     }
-    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), topBar = { WalkoryTopAppBar(title, if (stack.size > 1) back else null) },
+    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0), topBar = {
+        WalkoryTopAppBar(title, if (stack.size > 1) back else null) {
+            if (selected != null) IconButton({ deleteId = selected.id.value }, enabled = !state.deleting, modifier = Modifier.testTag("property_delete")) {
+                WalkoryIcon(Icons.Rounded.Delete, description = stringResource(R.string.objects_delete))
+            }
+        }
+    },
         floatingActionButton = {
-            if (current != PropertyEditRoute) ExtendedFloatingActionButton(
-                { model.begin(); stack.add(PropertyEditRoute) }, Modifier.testTag("property_new")) { Text(stringResource(R.string.objects_new)) }
+            if (current == PropertyListRoute) FloatingActionButton(
+                { model.begin(); stack.add(PropertyEditRoute) }, Modifier.testTag("property_new")) {
+                WalkoryIcon(Icons.Rounded.Add, description = stringResource(R.string.objects_new))
+            }
         }) { padding ->
         val reducedMotion = LocalReducedMotion.current
         NavDisplay(backStack = stack, onBack = back, modifier = Modifier.padding(padding).consumeWindowInsets(padding),
@@ -85,6 +98,10 @@ internal fun PropertiesWorkspace(model: PropertiesViewModel, properties: Collect
                     onInspection, onCreate, { model.begin(it); stack.add(PropertyEditRoute) }, model::delete) }
                 entry<PropertyEditRoute> { PropertyEditor(state, model) }
             })
+    }
+    (properties as? CollectionState.Content)?.items?.find { it.id.value == deleteId }?.let { property ->
+        WalkoryConfirmation(stringResource(R.string.objects_delete_title, property.name), stringResource(R.string.objects_delete_body),
+            stringResource(R.string.objects_delete), { deleteId = null; model.delete(property.id) }, { deleteId = null })
     }
     PropertyDiscardConfirmation(state, model) {
         if (state.discardToRoot) navigation.root()
@@ -136,7 +153,6 @@ internal fun PropertiesBrowser(properties: CollectionState<PropertyCard>, inspec
 @Composable
 private fun PropertyDetail(property: PropertyCard, inspections: CollectionState<Inspection>, editor: PropertiesState, onRetry: () -> Unit,
     onInspection: (String) -> Unit, onCreate: (PropertyCard) -> Unit, onEdit: (PropertyCard) -> Unit, onDelete: (PropertyId) -> Unit) {
-    var deleting by rememberSaveable { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize().testTag("property_detail"), contentPadding = PaddingValues(
         start = WalkorySpacing.medium, top = WalkorySpacing.medium, end = WalkorySpacing.medium, bottom = WalkoryLayout.floatingActionClearance),
         verticalArrangement = Arrangement.spacedBy(WalkorySpacing.medium)) {
@@ -145,11 +161,13 @@ private fun PropertyDetail(property: PropertyCard, inspections: CollectionState<
             Text(stringResource(R.string.objects_snapshot_notice))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
                 OutlinedButton({ onEdit(property) }, enabled = !editor.deleting, modifier = Modifier.testTag("property_edit")) { Text(stringResource(R.string.objects_edit)) }
-                TextButton({ deleting = true }, enabled = !editor.deleting, modifier = Modifier.testTag("property_delete")) { Text(stringResource(R.string.objects_delete)) }
             }
             if (editor.deleting) WalkoryLoading()
             if (editor.deleteFailedId == property.id) WalkoryError { onDelete(property.id) }
-            Button({ onCreate(property) }, enabled = !editor.deleting, modifier = Modifier.testTag("property_inspect")) { Text(stringResource(R.string.objects_inspect)) }
+            HorizontalDivider(Modifier.padding(vertical = WalkorySpacing.medium))
+            Button({ onCreate(property) }, enabled = !editor.deleting, modifier = Modifier.fillMaxWidth().testTag("property_inspect")) {
+                Text(stringResource(R.string.objects_inspect))
+            }
             Text(stringResource(R.string.objects_history), style = MaterialTheme.typography.titleMedium)
         }
         when (inspections) {
@@ -162,6 +180,4 @@ private fun PropertyDetail(property: PropertyCard, inspections: CollectionState<
             }
         }
     }
-    if (deleting) WalkoryConfirmation(stringResource(R.string.objects_delete_title, property.name), stringResource(R.string.objects_delete_body),
-        stringResource(R.string.objects_delete), { deleting = false; onDelete(property.id) }, { deleting = false })
 }

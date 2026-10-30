@@ -3,6 +3,8 @@ package com.walkory.app.features.inspections
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -16,10 +18,17 @@ import com.walkory.app.ui_kit.*
 @Composable
 internal fun InspectionHistoryControls(discovery: InspectionDiscovery, onChange: (InspectionDiscovery) -> Unit) {
     var filtering by rememberSaveable { mutableStateOf(false) }
-    OutlinedTextField(discovery.query, { onChange(discovery.copy(query = it)) },
-        label = { Text(stringResource(R.string.inspections_search)) }, modifier = Modifier.fillMaxWidth().testTag("history_search"))
+    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
+        WalkoryTextField(discovery.query, { onChange(discovery.copy(query = it)) },
+            label = { Text(stringResource(R.string.inspections_search)) }, singleLine = true,
+            leadingIcon = { WalkoryIcon(androidx.compose.material.icons.Icons.Rounded.Search) },
+            modifier = Modifier.weight(1f).testTag("history_search"))
+        FilledTonalIconButton({ filtering = true }, Modifier.testTag("history_filters")) {
+            WalkoryIcon(androidx.compose.material.icons.Icons.Rounded.FilterList, description = stringResource(R.string.inspections_filters))
+        }
+    }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-        OutlinedButton({ filtering = true }, Modifier.testTag("history_filters")) { Text(stringResource(R.string.inspections_filters)) }
         if (discovery != InspectionDiscovery()) TextButton({ onChange(InspectionDiscovery()) }, Modifier.testTag("history_reset")) {
             Text(stringResource(R.string.inspections_reset))
         }

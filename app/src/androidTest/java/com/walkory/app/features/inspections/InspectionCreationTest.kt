@@ -76,7 +76,7 @@ class InspectionCreationTest {
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("inspection_overview").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("inspection_overview").performScrollToNode(hasTestTag("result_report"))
         click("result_report")
-        compose.onNodeWithTag("report_generate").performScrollTo().assertIsDisplayed()
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("report_preview").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("inspection_new").assertDoesNotExist()
     }
 
@@ -105,6 +105,8 @@ class InspectionCreationTest {
         compose.onNodeWithText(text(R.string.inspections_room_required)).assertIsDisplayed()
         fun add(name: String) {
             click("inspection_add_room")
+            compose.onNodeWithTag("room_type").performClick()
+            compose.onNodeWithTag("room_type_KITCHEN").performClick()
             fill("new_room_name", name)
             compose.onNodeWithTag("room_add_confirm").performClick()
             roomListScroll("room_choose_macro")
@@ -159,7 +161,7 @@ class InspectionCreationTest {
         compose.onNodeWithTag("new_room_name").assertTextContains("Unconfirmed room")
         compose.onNodeWithTag("room_type").performClick()
         compose.onNodeWithTag("room_type_BEDROOM").performClick()
-        compose.onNodeWithTag("new_room_name").assertTextContains("Unconfirmed room")
+        compose.onNodeWithTag("new_room_name").assertTextContains(text(RoomType.BEDROOM.roomLabel()))
         compose.onNodeWithText(text(R.string.common_cancel)).performClick()
         compose.onNodeWithTag("navigate_back").performClick()
         compose.onNodeWithTag("inspection_name").assertTextContains("Unsaved inspection")

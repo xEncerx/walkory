@@ -2,8 +2,9 @@ package com.walkory.app.features.media
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -56,18 +57,38 @@ internal fun PhotographCollection(
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
         Text(stringResource(if (owner is PhotographOwner.Condition) R.string.inspections_media_condition else R.string.inspections_media_issue), style = MaterialTheme.typography.titleSmall)
-        if (photos.isNotEmpty()) LazyRow(horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
-            items(photos, key = { it.id.value }) { photo ->
-                val photoFile = remember(photo.fileId, model) { model.media.file(photo.fileId) }
-                OutlinedCard(Modifier.width(WalkoryLayout.photoThumbnail).clickable { selected = photo.id.value }.testTag("photo_${photo.id.value}")) {
-                    AsyncImage(photoFile, stringResource(R.string.inspections_media_open),
-                        Modifier.fillMaxWidth().aspectRatio(1f), contentScale = ContentScale.Crop)
-                    photo.caption?.let { Text(it, Modifier.padding(WalkorySpacing.small)) }
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(WalkorySpacing.small),
+            verticalArrangement = Arrangement.spacedBy(WalkorySpacing.small)) {
+            photos.forEach { photo ->
+                key(photo.id) {
+                    val photoFile = remember(photo.fileId, model) { model.media.file(photo.fileId) }
+                    OutlinedCard(Modifier.size(WalkoryLayout.photoThumbnail).clickable { selected = photo.id.value }.testTag("photo_${photo.id.value}")) {
+                        Box(Modifier.fillMaxSize()) {
+                            AsyncImage(photoFile, stringResource(R.string.inspections_media_open),
+                                Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                            photo.caption?.takeIf { it.isNotBlank() }?.let { caption ->
+                                Surface(Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)) {
+                                    Text(caption, Modifier.padding(WalkorySpacing.small), style = MaterialTheme.typography.labelSmall,
+                                        maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (owner is PhotographOwner.Condition) OutlinedCard(
+                onClick = { model.requestSource(inspection, owner, newIssueDescription) },
+                enabled = !state.busy && !preparing && !awaiting,
+                modifier = Modifier.size(WalkoryLayout.photoThumbnail).testTag("media_add_condition"),
+            ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    WalkoryIcon(Icons.Rounded.Add, description = stringResource(R.string.inspections_media_add))
                 }
             }
         }
-        OutlinedButton({ model.requestSource(inspection, owner, newIssueDescription) }, enabled = !state.busy && !preparing && !awaiting,
-            modifier = Modifier.testTag(if (owner is PhotographOwner.Condition) "media_add_condition" else "media_add_issue")) {
+        if (owner is PhotographOwner.IssueEvidence) OutlinedButton({ model.requestSource(inspection, owner, newIssueDescription) },
+            enabled = !state.busy && !preparing && !awaiting, modifier = Modifier.testTag("media_add_issue")) {
             Text(stringResource(R.string.inspections_media_add))
         }
     }

@@ -42,4 +42,7 @@
     <string name="templates_no_matches">No templates for this filter</string>
     <string name="templates_no_matches_body">Choose another filter, create a template or copy a built-in.</string>
     <string name="templates_custom_summary">%1$s · custom</string>
+    <string name="templates_search">Search by name</string>
+    <string name="templates_source">Templates</string>
+    <string name="templates_add_quick">+ Check</string>
 </resources>

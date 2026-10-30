@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,7 +32,7 @@ import com.walkory.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WalkoryTopAppBar(title: String, onBack: (() -> Unit)? = null) {
+fun WalkoryTopAppBar(title: String, onBack: (() -> Unit)? = null, actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {}) {
     CenterAlignedTopAppBar(
         title = { Text(title, textAlign = TextAlign.Center, modifier = Modifier.testTag("app_bar_title").semantics { heading() }) },
         navigationIcon = {
@@ -41,6 +40,7 @@ fun WalkoryTopAppBar(title: String, onBack: (() -> Unit)? = null) {
                 WalkoryIcon(Icons.AutoMirrored.Rounded.ArrowBack, description = stringResource(R.string.common_back))
             }
         },
+        actions = actions,
     )
 }
 
@@ -57,7 +57,7 @@ fun WalkoryRequiredField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
     val invalid = requiredTextError(value, showError)
-    OutlinedTextField(
+    WalkoryTextField(
         value = value, onValueChange = onValueChange,
         label = { Text(label) }, isError = invalid,
         supportingText = if (invalid) ({ Text(stringResource(R.string.common_required_field)) }) else null,
