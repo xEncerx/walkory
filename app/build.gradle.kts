@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -24,8 +26,32 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val signingPropertiesFile = rootProject.file("tools/signing/release.properties")
+    if (signingPropertiesFile.isFile) {
+        val signingProperties = Properties().apply {
+            signingPropertiesFile.inputStream().use { load(it) }
+        }
+        fun requiredSigningProperty(name: String): String =
+            requireNotNull(signingProperties.getProperty(name)?.takeIf { it.isNotBlank() }) {
+                "Missing '$name' in tools/signing/release.properties"
+            }
+
+        signingConfigs.create("release") {
+            storeFile = signingPropertiesFile.parentFile.resolve(
+                requiredSigningProperty("storeFile")
+            )
+            require(storeFile!!.isFile) {
+                "Release keystore not found. Check storeFile in tools/signing/release.properties"
+            }
+            storePassword = requiredSigningProperty("storePassword")
+            keyAlias = requiredSigningProperty("keyAlias")
+            keyPassword = requiredSigningProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
