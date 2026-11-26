@@ -74,6 +74,15 @@ android {
     }
 }
 
+val releaseVersionName = android.defaultConfig.versionName
+val releaseVersionCode = android.defaultConfig.versionCode
+tasks.register("printReleaseVersion") {
+    doLast {
+        println("RELEASE_VERSION=$releaseVersionName")
+        println("RELEASE_VERSION_CODE=$releaseVersionCode")
+    }
+}
+
 room {
     schemaDirectory("$projectDir/schemas")
 }

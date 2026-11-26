@@ -1,0 +1,159 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Run unit tests
+        run: bash ./gradlew :app:testDebugUnitTest
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_info=$(bash ./gradlew -q :app:printReleaseVersion)
+          version=$(printf '%s\n' "$version_info" | awk -F= '$1 == "RELEASE_VERSION" {print $2}')
+          code=$(printf '%s\n' "$version_info" | awk -F= '$1 == "RELEASE_VERSION_CODE" {print $2}')
+          if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*([.-][a-zA-Z0-9]+)*$ || ! "$code" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'Invalid release version or version code.' >&2
+            exit 1
+          fi
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Release version: $version ($code)"
+
+      - name: Check release and tag
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          response=$(mktemp)
+          status=$(curl --silent --show-error --location --output "$response" --write-out '%{http_code}' \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/tags/$TAG")
+          case "$status" in
+            200)
+              echo "Release $TAG already exists; skipping publication."
+              echo 'publish=false' >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+            404) ;;
+            *)
+              echo "GitHub release lookup failed (HTTP $status)." >&2
+              exit 1
+              ;;
+          esac
+          rm -f "$response"
+          set +e
+          git ls-remote --exit-code --refs origin "refs/tags/$TAG" > /dev/null
+          result=$?
+          set -e
+          if [[ "$result" -eq 0 ]]; then
+            git fetch --no-tags origin "refs/tags/$TAG:refs/tags/$TAG"
+            if [[ "$(git rev-parse "refs/tags/$TAG^{commit}")" != "$GITHUB_SHA" ]]; then
+              echo "Tag $TAG points to a different commit." >&2
+              exit 1
+            fi
+          elif [[ "$result" -ne 2 ]]; then
+            echo 'Failed to check the remote tag.' >&2
+            exit 1
+          fi
+          echo 'publish=true' >> "$GITHUB_OUTPUT"
+
+      - name: Restore signing files
+        if: steps.check.outputs.publish == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+
+          names = ('KEYSTORE_BASE64', 'STORE_PASSWORD', 'KEY_ALIAS', 'KEY_PASSWORD')
+          if any(not os.environ.get(name) for name in names):
+              raise SystemExit('A required release signing secret is missing.')
+          signing = Path('tools/signing')
+          signing.mkdir(parents=True, exist_ok=True)
+          (signing / 'release.keystore').write_bytes(base64.b64decode(os.environ['KEYSTORE_BASE64'], validate=True))
+
+          def property_value(value):
+              data = value.encode('utf-16-be')
+              return ''.join('\\u' + data[i:i + 2].hex() for i in range(0, len(data), 2))
+
+          properties = {
+              'storeFile': 'release.keystore',
+              'storePassword': os.environ['STORE_PASSWORD'],
+              'keyAlias': os.environ['KEY_ALIAS'],
+              'keyPassword': os.environ['KEY_PASSWORD'],
+          }
+          (signing / 'release.properties').write_text(
+              ''.join(f'{key}={property_value(value)}\n' for key, value in properties.items()),
+              encoding='ascii',
+          )
+          PY
+
+      - name: Build signed APK
+        if: steps.check.outputs.publish == 'true'
+        run: bash ./gradlew :app:assembleRelease --no-configuration-cache
+
+      - name: Verify APK signature
+        if: steps.check.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          test -n "$apksigner"
+          "$apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
+
+      - name: Publish release
+        if: steps.check.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" app/build/outputs/apk/release/app-release.apk \
+            --target "$GITHUB_SHA" --title "Walkory $VERSION" --notes ''
