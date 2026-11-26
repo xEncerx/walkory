@@ -155,5 +155,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "$TAG" app/build/outputs/apk/release/app-release.apk \
+          mv app/build/outputs/apk/release/app-release.apk "Walkory-$VERSION.apk"
+          gh release create "$TAG" "Walkory-$VERSION.apk" \
             --target "$GITHUB_SHA" --title "Walkory $VERSION" --notes ''
